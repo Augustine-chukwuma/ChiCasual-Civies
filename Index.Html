@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ChiCasual-Civies</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Material Design Lite -->
+  <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+  <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+  <script defer src="app.js"></script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+</head>
+<body style="font-family: Roboto, sans-serif; padding: 2rem; background: #f4f4f4;">
+
+  <h2 class="mdl-typography--display-2">ChiCasual-Civies</h2>
+
+  <!-- Auth Section -->
+  <div id="authSection" class="mdl-card mdl-shadow--2dp" style="padding: 1rem; max-width: 400px; margin-bottom: 2rem;">
+    <h4 id="authTitle">Login / Sign Up</h4>
+    <div class="mdl-textfield mdl-js-textfield">
+      <input class="mdl-textfield__input" type="email" id="email" placeholder="Email">
+    </div><br>
+    <div class="mdl-textfield mdl-js-textfield">
+      <input class="mdl-textfield__input" type="password" id="password" placeholder="Password">
+    </div><br>
+    <button id="loginBtn" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored">Login</button>
+    <button id="signupBtn" class="mdl-button mdl-js-button mdl-button--raised">Sign Up</button>
+    <p id="authMessage" style="color:red;"></p>
+  </div>
+
+  <!-- Main Section -->
+  <div id="mainSection" style="display:none;">
+    <button id="logoutBtn" class="mdl-button mdl-js-button mdl-button--accent">Logout</button>
+
+    <h4 class="mdl-typography--title">Available Products</h4>
+    <div id="productList" class="mdl-grid"></div>
+
+    <!-- Admin Upload -->
+    <div style="margin-top:2rem;" class="mdl-card mdl-shadow--2dp" style="padding: 1rem;">
+      <h5>Admin - Upload Product</h5>
+      <div class="mdl-textfield mdl-js-textfield">
+        <input class="mdl-textfield__input" type="text" id="prodName" placeholder="Product Name">
+      </div><br>
+      <div class="mdl-textfield mdl-js-textfield">
+        <input class="mdl-textfield__input" type="number" id="prodPrice" placeholder="Price">
+      </div><br>
+      <button id="uploadBtn" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored">Upload Product</button>
+    </div>
+  </div>
+
+</body>
+</html>
