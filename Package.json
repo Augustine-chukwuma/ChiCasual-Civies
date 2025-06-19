@@ -1,0 +1,14 @@
+{
+  "name": "chicasual-civies",
+  "version": "1.0.0",
+  "description": "A Firebase-based modern e-commerce site with user auth and admin product upload",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "ChiCasual Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.4"
+  }
+}
