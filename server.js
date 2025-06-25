@@ -8,8 +8,8 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Serve static files (e.g., public/index.html)
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve static files (e.g., index.html)
+app.use(express.static(path.join(__dirname)));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
