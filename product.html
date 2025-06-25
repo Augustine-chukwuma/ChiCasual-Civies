@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChiCasual-Cives | Products</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #e6e6e6; /* ash background */
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #001f3f; /* navy blue */
+      padding: 10px 20px;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 22px;
+    }
+    .search-bar {
+      width: 50%;
+      display: flex;
+    }
+    .search-bar input {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      border-radius: 4px 0 0 4px;
+    }
+    .search-bar button {
+      padding: 8px 16px;
+      border: none;
+      background-color: #555; /* ash/dark gray */
+      color: white;
+      border-radius: 0 4px 4px 0;
+      cursor: pointer;
+    }
+    .container {
+      padding: 20px;
+    }
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+    }
+    .product {
+      background-color: white;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      overflow: hidden;
+      transition: box-shadow 0.3s ease;
+    }
+    .product:hover {
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+    .product img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+    }
+    .product-details {
+      padding: 10px;
+    }
+    .product-details h4 {
+      margin: 0 0 10px;
+      font-size: 16px;
+      color: #001f3f; /* navy blue */
+    }
+    .price {
+      font-weight: bold;
+      color: #001f3f; /* navy blue */
+      font-size: 14px;
+    }
+    .discount {
+      color: #999;
+      text-decoration: line-through;
+      font-size: 12px;
+      margin-left: 8px;
+    }
+    .admin-link {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      opacity: 0.01;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>ChiCasual-Cives</h1>
+    <div class="search-bar">
+      <input type="text" placeholder="Search products..." id="searchInput">
+      <button onclick="filterProducts()"><i class="fas fa-search"></i></button>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="product-grid" id="productGrid">
+      <!-- Products will be injected here -->
+    </div>
+  </div>
+
+  <!-- Hidden Admin Access -->
+  <a href="admin.html" class="admin-link">Admin</a>
+
+  <script>
+    let allProducts = [];
+
+    async function fetchProducts() {
+      try {
+        const res = await fetch('/products');
+        const data = await res.json();
+        allProducts = data.products;
+        renderProducts(allProducts);
+      } catch (err) {
+        console.error('Error fetching products:', err);
+      }
+    }
+
+    function renderProducts(products) {
+      const grid = document.getElementById('productGrid');
+      grid.innerHTML = '';
+
+      products.forEach(product => {
+        const discountPrice = (parseFloat(product.price) * (1 - (parseFloat(product.discount || 0) / 100))).toFixed(2);
+
+        const productCard = document.createElement('div');
+        productCard.className = 'product';
+        productCard.innerHTML = `
+          <img src="${product.url}" alt="${product.name}" />
+          <div class="product-details">
+            <h4>${product.name}</h4>
+            <div>
+              <span class="price">₦${discountPrice}</span>
+              ${product.discount ? `<span class="discount">₦${product.price}</span>` : ''}
+            </div>
+          </div>
+        `;
+
+        grid.appendChild(productCard);
+      });
+    }
+
+    function filterProducts() {
+      const query = document.getElementById('searchInput').value.toLowerCase();
+      const filtered = allProducts.filter(p => p.name.toLowerCase().includes(query));
+      renderProducts(filtered);
+    }
+
+    // Initial fetch
+    fetchProducts();
+  </script>
+</body>
+</html>
