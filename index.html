@@ -1,16 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ChiCasual-Cives</title>
+  <meta charset="UTF-8">
+  <title>ChiCasual-Cives Splash</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body {
+    html, body {
       margin: 0;
       padding: 0;
-      background: url('firstview.jpg') no-repeat center center fixed;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .splash {
+      background: url('firstview.jpg') no-repeat center center;
       background-size: cover;
+      height: 100vh;
+      width: 100vw;
       display: flex;
       align-items: center;
       justify-content: center;
-      height:
+      animation: zoomFade 3s ease-in-out forwards;
+    }
+
+    @keyframes zoomFade {
+      0% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      70% {
+        transform: scale(1.05);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(1.1);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="splash"></div>
+
+  <script>
+    // Redirect to product.html after animation completes
+    setTimeout(function() {
+      window.location.href = "product.html";
+    }, 3000);
+  </script>
+</body>
+</html>
