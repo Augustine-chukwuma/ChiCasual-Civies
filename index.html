@@ -11,20 +11,42 @@
       height: 100%;
       width: 100%;
       overflow: hidden;
-      background-color: #000; /* fallback background */
+      background-color: #000; /* fallback color */
     }
 
     .splash {
       background: url('firstview.jpg') no-repeat center center;
-      background-size: contain; /* maintain aspect ratio */
+      background-size: contain;
       background-repeat: no-repeat;
       background-position: center;
       height: 100vh;
       width: 100vw;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       animation: zoomFade 7s ease-in-out forwards;
+      position: relative;
+    }
+
+    .logo {
+      width: 120px;
+      height: 120px;
+      background: url('logo.png') no-repeat center center;
+      background-size: contain;
+      margin-bottom: 20px;
+      opacity: 0;
+      animation: fadeIn 3s ease-in-out 1s forwards;
+    }
+
+    .welcome-text {
+      font-size: 1.5em;
+      color: white;
+      font-weight: 500;
+      opacity: 0;
+      animation: fadeIn 3s ease-in-out 2s forwards;
+      text-align: center;
+      padding: 0 20px;
     }
 
     @keyframes zoomFade {
@@ -41,10 +63,19 @@
         opacity: 0;
       }
     }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="splash"></div>
+  <div class="splash">
+    <div class="logo"></div>
+    <div class="welcome-text">Welcome to ChiCasual-Cives</div>
+  </div>
 
   <script>
     // Redirect to product.html after 7 seconds
