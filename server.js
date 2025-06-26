@@ -17,8 +17,7 @@ app.use(express.json());
 
 // === Admin Login Config ===
 const ADMIN_USERNAME = 'admin';
-const HASHED_PASSWORD = '$2b$10$4hO5JvNSiNIFe3ERPIv93.TmEnoVW/ZnPKbcS9Zuzhl9uTqN2ZaKq';
-let isLoggedIn = false;
+const HASHED_PASSWORD = '$2b$10$4hO5JvNSiNIFe3ERPIv93.TmEnoVW/ZnPKbcS9Zuzhl9uTqN2ZaKq'; // hashed "thisisjustthebeginning"
 
 // === Cloudinary Config ===
 cloudinary.config({
@@ -45,28 +44,8 @@ const storage = new CloudinaryStorage({
 });
 const parser = multer({ storage });
 
-// === Login Middleware ===
-function requireLogin(req, res, next) {
-  if (isLoggedIn) return next();
-  return res.redirect('/login.html');
-}
-
-// === Login Route ===
-app.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-  if (username !== ADMIN_USERNAME) {
-    return res.status(401).send('Invalid username');
-  }
-  const match = await bcrypt.compare(password, HASHED_PASSWORD);
-  if (!match) {
-    return res.status(401).send('Invalid password');
-  }
-  isLoggedIn = true;
-  res.redirect('/upload-form.html');
-});
-
-// === Product Upload (Protected) ===
-app.post('/upload', requireLogin, parser.single('image'), async (req, res) => {
+// === Product Upload ===
+app.post('/upload', parser.single('image'), async (req, res) => {
   const { productName, productPrice, productDiscount, productCategory } = req.body;
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
@@ -89,7 +68,7 @@ app.post('/upload', requireLogin, parser.single('image'), async (req, res) => {
   }
 });
 
-// === Fetch Products (Open) ===
+// === Fetch Products ===
 app.get('/products', async (req, res) => {
   try {
     const result = await cloudinary.search
