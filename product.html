@@ -1,19 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ChiCasual-Cives | Products</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #e6e6e6; /* ash background */
+      background-color: #e6e6e6;
       margin: 0;
       padding: 0;
     }
     header {
-      background-color: #001f3f; /* navy blue */
+      background-color: #001f3f;
       padding: 10px 20px;
       color: white;
       display: flex;
@@ -37,13 +37,21 @@
     .search-bar button {
       padding: 8px 16px;
       border: none;
-      background-color: #555; /* ash/dark gray */
+      background-color: #555;
       color: white;
       border-radius: 0 4px 4px 0;
       cursor: pointer;
     }
     .container {
       padding: 20px;
+    }
+    .category {
+      margin-bottom: 30px;
+    }
+    .category h2 {
+      color: #001f3f;
+      font-size: 20px;
+      margin-bottom: 10px;
     }
     .product-grid {
       display: grid;
@@ -71,11 +79,11 @@
     .product-details h4 {
       margin: 0 0 10px;
       font-size: 16px;
-      color: #001f3f; /* navy blue */
+      color: #001f3f;
     }
     .price {
       font-weight: bold;
-      color: #001f3f; /* navy blue */
+      color: #001f3f;
       font-size: 14px;
     }
     .discount {
@@ -88,7 +96,19 @@
       position: fixed;
       bottom: 10px;
       right: 10px;
-      opacity: 0.01;
+      background-color: #001f3f;
+      color: white;
+      padding: 10px 16px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: bold;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      transition: background-color 0.3s ease;
+      z-index: 1000;
+    }
+    .admin-link:hover {
+      background-color: #003366;
     }
   </style>
 </head>
@@ -101,14 +121,11 @@
     </div>
   </header>
 
-  <div class="container">
-    <div class="product-grid" id="productGrid">
-      <!-- Products will be injected here -->
-    </div>
+  <div class="container" id="categoriesContainer">
+    <!-- Categories and products will be injected here -->
   </div>
 
-  <!-- Hidden Admin Access -->
-  <a href="admin.html" class="admin-link">Admin</a>
+  <a href="admin.html" class="admin-link"><i class="fas fa-user-shield"></i> Admin Panel</a>
 
   <script>
     let allProducts = [];
@@ -118,43 +135,59 @@
         const res = await fetch('/products');
         const data = await res.json();
         allProducts = data.products;
-        renderProducts(allProducts);
+        renderProductsByCategory(allProducts);
       } catch (err) {
         console.error('Error fetching products:', err);
       }
     }
 
-    function renderProducts(products) {
-      const grid = document.getElementById('productGrid');
-      grid.innerHTML = '';
+    function renderProductsByCategory(products) {
+      const container = document.getElementById('categoriesContainer');
+      container.innerHTML = '';
 
+      const categories = {};
       products.forEach(product => {
-        const discountPrice = (parseFloat(product.price) * (1 - (parseFloat(product.discount || 0) / 100))).toFixed(2);
-
-        const productCard = document.createElement('div');
-        productCard.className = 'product';
-        productCard.innerHTML = `
-          <img src="${product.url}" alt="${product.name}" />
-          <div class="product-details">
-            <h4>${product.name}</h4>
-            <div>
-              <span class="price">₦${discountPrice}</span>
-              ${product.discount ? `<span class="discount">₦${product.price}</span>` : ''}
-            </div>
-          </div>
-        `;
-
-        grid.appendChild(productCard);
+        const cat = (product.category || 'Others').toLowerCase();
+        if (!categories[cat]) categories[cat] = [];
+        categories[cat].push(product);
       });
+
+      Object.keys(categories).forEach(cat => {
+        const section = document.createElement('div');
+        section.className = 'category';
+        section.innerHTML = `<h2>${capitalize(cat)}</h2><div class="product-grid"></div>`;
+
+        categories[cat].forEach(product => {
+          const discountPrice = (parseFloat(product.price) * (1 - (parseFloat(product.discount || 0) / 100))).toFixed(2);
+          const card = document.createElement('div');
+          card.className = 'product';
+          card.innerHTML = `
+            <img src="${product.url}" alt="${product.name}" />
+            <div class="product-details">
+              <h4>${product.name}</h4>
+              <div>
+                <span class="price">₦${discountPrice}</span>
+                ${product.discount ? `<span class="discount">₦${product.price}</span>` : ''}
+              </div>
+            </div>
+          `;
+          section.querySelector('.product-grid').appendChild(card);
+        });
+
+        container.appendChild(section);
+      });
+    }
+
+    function capitalize(str) {
+      return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
     function filterProducts() {
       const query = document.getElementById('searchInput').value.toLowerCase();
       const filtered = allProducts.filter(p => p.name.toLowerCase().includes(query));
-      renderProducts(filtered);
+      renderProductsByCategory(filtered);
     }
 
-    // Initial fetch
     fetchProducts();
   </script>
 </body>
