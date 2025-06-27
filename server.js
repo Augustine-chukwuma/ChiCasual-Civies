@@ -52,8 +52,8 @@ app.post('/upload', parser.single('image'), async (req, res) => {
   }
   try {
     const contextStr = `name=${productName}|price=${productPrice}|discount=${productDiscount}|category=${productCategory}`;
-    await cloudinary.uploader.add_context(contextStr, req.file.filename);
-
+    const publicId = req.file.filename || req.file.public_id;
+await cloudinary.uploader.add_context(contextStr, publicId);
     res.status(200).json({
       message: 'Upload successful',
       imageUrl: req.file.path,
