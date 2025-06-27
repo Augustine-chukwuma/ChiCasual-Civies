@@ -14,7 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 // === Cloudinary Config (via .env) ===
-// .env format: CLOUDINARY_URL=cloudinary://API_KEY:API_SECRET@CLOUD_NAME
+// Ensure .env has: CLOUDINARY_URL=cloudinary://API_KEY:API_SECRET@CLOUD_NAME
 cloudinary.config(); 
 
 // === Multer + Cloudinary Storage ===
@@ -96,26 +96,6 @@ app.get('/products', async (req, res) => {
   } catch (err) {
     console.error('❌ Error fetching products:', err);
     res.status(500).json({ error: 'Failed to fetch products', details: err.message });
-  }
-});
-
-// === Delete Product Endpoint ===
-app.delete('/delete/:public_id', async (req, res) => {
-  const { public_id } = req.params;
-
-  try {
-    const result = await cloudinary.uploader.destroy(public_id);
-    
-    if (result.result === 'ok') {
-      console.log(`🗑️ Deleted product: ${public_id}`);
-      res.json({ message: '✅ Product deleted successfully' });
-    } else {
-      console.warn(`⚠️ Deletion failed for ${public_id}`, result);
-      res.status(404).json({ error: 'Product not found or already deleted' });
-    }
-  } catch (err) {
-    console.error('❌ Error deleting product:', err.message);
-    res.status(500).json({ error: 'Failed to delete product', details: err.message });
   }
 });
 
