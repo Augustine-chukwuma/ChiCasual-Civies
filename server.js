@@ -8,16 +8,24 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Debug: Confirm that environment variables are loaded
+console.log('CLOUDINARY_CLOUD_NAME:', process.env.CLOUDINARY_CLOUD_NAME);
+console.log('CLOUDINARY_API_KEY:', process.env.CLOUDINARY_API_KEY);
+console.log('CLOUDINARY_API_SECRET:', process.env.CLOUDINARY_API_SECRET);
+
 // === Static & Parsing Middleware ===
 app.use(express.static(path.join(__dirname)));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// === Cloudinary Config (via .env) ===
-// Ensure .env has: CLOUDINARY_URL=cloudinary://API_KEY:API_SECRET@CLOUD_NAME
-cloudinary.config(); 
+// === Cloudinary Config Using Explicit Environment Variables ===
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-// === Multer + Cloudinary Storage ===
+// === Multer + Cloudinary Storage Setup ===
 const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
@@ -94,12 +102,30 @@ app.get('/products', async (req, res) => {
     console.log(`✅ ${products.length} products fetched`);
     res.json({ products });
   } catch (err) {
-    console.error('❌ Error fetching products:', err);
+    console.error('❌ Error fetching products:', err.message);
     res.status(500).json({ error: 'Failed to fetch products', details: err.message });
   }
 });
 
-// === Keep-Alive Ping ===
+// === Delete Product Endpoint ===
+app.delete('/delete/:public_id', async (req, res) => {
+  const { public_id } = req.params;
+  try {
+    const result = await cloudinary.uploader.destroy(public_id);
+    if (result.result === 'ok') {
+      console.log(`🗑️ Deleted product: ${public_id}`);
+      res.json({ message: '✅ Product deleted successfully' });
+    } else {
+      console.warn(`⚠️ Deletion failed for ${public_id}`, result);
+      res.status(404).json({ error: 'Product not found or already deleted' });
+    }
+  } catch (err) {
+    console.error('❌ Error deleting product:', err.message);
+    res.status(500).json({ error: 'Failed to delete product', details: err.message });
+  }
+});
+
+// === Keep-Alive Ping Endpoint ===
 app.get('/ping', (req, res) => res.send('🏓 Pong'));
 setInterval(() => {
   fetch(process.env.SELF_URL)
