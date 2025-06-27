@@ -1,4 +1,3 @@
-// server.js
 const express = require('express');
 const multer = require('multer');
 const bcrypt = require('bcrypt');
@@ -26,6 +25,7 @@ cloudinary.config({
   api_secret: 'oqn56WmLwfOT7FK4RU1cX5nBvcA',
 });
 
+// === Cloudinary Storage ===
 const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
@@ -33,10 +33,10 @@ const storage = new CloudinaryStorage({
     return {
       folder: 'products',
       context: {
-        name: productName,
-        price: productPrice,
-        discount: productDiscount,
-        category: productCategory,
+        name: productName || 'Unnamed',
+        price: productPrice || '0',
+        discount: productDiscount || '0',
+        category: productCategory || 'uncategorized',
       },
       allowed_formats: ['jpg', 'jpeg', 'png'],
     };
@@ -44,31 +44,37 @@ const storage = new CloudinaryStorage({
 });
 const parser = multer({ storage });
 
-// === Product Upload ===
+// === Product Upload Route ===
 app.post('/upload', parser.single('image'), async (req, res) => {
   const { productName, productPrice, productDiscount, productCategory } = req.body;
+
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
+
   try {
     const contextStr = `name=${productName}|price=${productPrice}|discount=${productDiscount}|category=${productCategory}`;
-    const publicId = req.file.filename || req.file.public_id;
-await cloudinary.uploader.add_context(contextStr, publicId);
+    const publicId = req.file.filename || req.file.public_id || req.file.originalname;
+
+    // Set context for image (optional, Cloudinary uses params.context already)
+    await cloudinary.uploader.add_context(contextStr, publicId);
+
     res.status(200).json({
       message: 'Upload successful',
       imageUrl: req.file.path,
-      public_id: req.file.filename,
+      public_id: publicId,
       name: productName,
       price: productPrice,
       discount: productDiscount,
       category: productCategory,
     });
   } catch (error) {
+    console.error('Upload failed:', error);
     res.status(500).json({ error: 'Upload failed', details: error.message });
   }
 });
 
-// === Fetch Products ===
+// === Fetch Products Route ===
 app.get('/products', async (req, res) => {
   try {
     const result = await cloudinary.search
@@ -89,7 +95,8 @@ app.get('/products', async (req, res) => {
 
     res.json({ products });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch', details: err.message });
+    console.error('Fetch failed:', err);
+    res.status(500).json({ error: 'Failed to fetch products', details: err.message });
   }
 });
 
