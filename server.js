@@ -1,6 +1,5 @@
 const express = require('express');
 const multer = require('multer');
-const bcrypt = require('bcrypt');
 const { v2: cloudinary } = require('cloudinary');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const path = require('path');
@@ -14,18 +13,11 @@ app.use(express.static(path.join(__dirname)));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// === Admin Login Config ===
-const ADMIN_USERNAME = 'admin';
-const HASHED_PASSWORD = '$2b$10$4hO5JvNSiNIFe3ERPIv93.TmEnoVW/ZnPKbcS9Zuzhl9uTqN2ZaKq'; // hashed "thisisjustthebeginning"
+// === Cloudinary Config (via .env) ===
+// Ensure .env has: CLOUDINARY_URL=cloudinary://API_KEY:API_SECRET@CLOUD_NAME
+cloudinary.config(); 
 
-// === Cloudinary Auto Config from .env ===
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_URL.split('@')[1],
-  api_key: process.env.CLOUDINARY_URL.split('//')[1].split(':')[0],
-  api_secret: process.env.CLOUDINARY_URL.split(':')[2].split('@')[0],
-});
-
-// === Multer Storage Setup ===
+// === Multer + Cloudinary Storage ===
 const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
@@ -33,10 +25,10 @@ const storage = new CloudinaryStorage({
     return {
       folder: 'products',
       context: {
-        name: productName || 'Unnamed',
-        price: productPrice || '0',
-        discount: productDiscount || '0',
-        category: productCategory || 'uncategorized',
+        name: productName,
+        price: productPrice,
+        discount: productDiscount,
+        category: productCategory,
       },
       allowed_formats: ['jpg', 'jpeg', 'png'],
     };
@@ -44,26 +36,20 @@ const storage = new CloudinaryStorage({
 });
 const parser = multer({ storage });
 
-// === Product Upload ===
+// === Product Upload Endpoint ===
 app.post('/upload', parser.single('image'), async (req, res) => {
   const { productName, productPrice, productDiscount, productCategory } = req.body;
-
-  console.log('➡️ Incoming upload request with:');
-  console.log({ productName, productPrice, productDiscount, productCategory });
+  console.log('➡️ Upload request:', req.body);
 
   if (!req.file) {
-    console.error('❌ No image file uploaded');
+    console.error('❌ No file uploaded');
     return res.status(400).json({ error: 'No file uploaded' });
   }
 
   try {
     const publicId = req.file.filename || req.file.public_id;
-    const contextStr = `name=${productName}|price=${productPrice}|discount=${productDiscount}|category=${productCategory}`;
+    console.log('✅ Uploaded image, publicId:', publicId);
 
-    console.log(`📤 Setting Cloudinary context for ${publicId}: ${contextStr}`);
-    await cloudinary.uploader.add_context(contextStr, publicId);
-
-    console.log('✅ Upload successful');
     res.status(200).json({
       message: '✅ Upload successful',
       imageUrl: req.file.path,
@@ -74,12 +60,12 @@ app.post('/upload', parser.single('image'), async (req, res) => {
       category: productCategory,
     });
   } catch (error) {
-    console.error('❌ Upload failed:', error.message);
+    console.error('❌ Upload error:', error);
     res.status(500).json({ error: 'Upload failed', details: error.message });
   }
 });
 
-// === Fetch Products ===
+// === Fetch Products Endpoint ===
 app.get('/products', async (req, res) => {
   console.log('🔍 Fetching products from Cloudinary...');
 
@@ -91,42 +77,36 @@ app.get('/products', async (req, res) => {
       .max_results(30)
       .execute();
 
-    const products = result.resources.map((item, i) => {
-      const context = item.context?.custom || {};
-      const product = {
+    const products = result.resources.map((item, index) => {
+      const ctx = item.context?.custom || {};
+      const p = {
         url: item.secure_url,
-        name: context.name || 'Unnamed',
-        price: context.price || '0',
-        discount: context.discount || '0',
-        category: context.category || 'uncategorized',
+        name: ctx.name || 'Unnamed',
+        price: ctx.price || '0',
+        discount: ctx.discount || '0',
+        category: ctx.category || 'uncategorized',
         public_id: item.public_id,
       };
-      console.log(`🛍️ Product ${i + 1}:`, product);
-      return product;
+      console.log(`🛍️ Product ${index + 1}:`, p);
+      return p;
     });
 
     console.log(`✅ ${products.length} products fetched`);
     res.json({ products });
   } catch (err) {
-    console.error('❌ Failed to fetch products:', err.message);
+    console.error('❌ Error fetching products:', err);
     res.status(500).json({ error: 'Failed to fetch products', details: err.message });
   }
 });
 
-// === Keep Alive Ping ===
-app.get('/ping', (req, res) => {
-  res.send('🏓 Pong');
-});
-
-const SELF_URL = 'https://chicasual-civies-jof8.onrender.com/ping';
+// === Keep-Alive Ping ===
+app.get('/ping', (req, res) => res.send('🏓 Pong'));
 setInterval(() => {
-  fetch(SELF_URL)
-    .then(res => res.text())
-    .then(data => console.log(`🔁 Self-ping: ${data}`))
-    .catch(err => console.error('⚠️ Self-ping failed:', err.message));
+  fetch(process.env.SELF_URL)
+    .then(r => r.text())
+    .then(d => console.log(`🔁 Pinged: ${d}`))
+    .catch(err => console.error('⚠️ Ping error:', err));
 }, 14 * 60 * 1000);
 
 // === Start Server ===
-app.listen(PORT, () => {
-  console.log(`✅ Server running at http://localhost:${PORT}`);
-});
+app.listen(PORT, () => console.log(`✅ Server running at http://localhost:${PORT}`));
