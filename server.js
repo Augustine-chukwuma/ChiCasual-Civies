@@ -18,14 +18,14 @@ app.use(express.json());
 const ADMIN_USERNAME = 'admin';
 const HASHED_PASSWORD = '$2b$10$4hO5JvNSiNIFe3ERPIv93.TmEnoVW/ZnPKbcS9Zuzhl9uTqN2ZaKq'; // hashed "thisisjustthebeginning"
 
-// === Cloudinary Config ===
+// === Cloudinary Auto Config from .env ===
 cloudinary.config({
-  cloud_name: 'dn71wkf7',
-  api_key: '297328628727681',
-  api_secret: 'oqn56WmLwfOT7FK4RU1cX5nBvcA',
+  cloud_name: process.env.CLOUDINARY_URL.split('@')[1],
+  api_key: process.env.CLOUDINARY_URL.split('//')[1].split(':')[0],
+  api_secret: process.env.CLOUDINARY_URL.split(':')[2].split('@')[0],
 });
 
-// === Cloudinary Storage ===
+// === Multer Storage Setup ===
 const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
@@ -44,7 +44,7 @@ const storage = new CloudinaryStorage({
 });
 const parser = multer({ storage });
 
-// === Product Upload Route ===
+// === Product Upload ===
 app.post('/upload', parser.single('image'), async (req, res) => {
   const { productName, productPrice, productDiscount, productCategory } = req.body;
 
@@ -53,16 +53,10 @@ app.post('/upload', parser.single('image'), async (req, res) => {
   }
 
   try {
-    const contextStr = `name=${productName}|price=${productPrice}|discount=${productDiscount}|category=${productCategory}`;
-    const publicId = req.file.filename || req.file.public_id || req.file.originalname;
-
-    // Set context for image (optional, Cloudinary uses params.context already)
-    await cloudinary.uploader.add_context(contextStr, publicId);
-
     res.status(200).json({
       message: 'Upload successful',
       imageUrl: req.file.path,
-      public_id: publicId,
+      public_id: req.file.filename,
       name: productName,
       price: productPrice,
       discount: productDiscount,
@@ -74,7 +68,7 @@ app.post('/upload', parser.single('image'), async (req, res) => {
   }
 });
 
-// === Fetch Products Route ===
+// === Fetch Products ===
 app.get('/products', async (req, res) => {
   try {
     const result = await cloudinary.search
