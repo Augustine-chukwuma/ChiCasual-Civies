@@ -2,130 +2,100 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <title>Admin Upload | ChiCasual-Cives</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ChiCasual Admin Panel</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-      padding: 40px;
-      max-width: 600px;
+      background-color: #f9f9f9;
+      padding: 20px;
+      max-width: 500px;
       margin: auto;
     }
-
     h2 {
+      text-align: center;
       color: #001f3f;
-      margin-bottom: 20px;
     }
-
-    input, select, button {
+    form {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    input, button {
+      display: block;
+      width: 100%;
       margin-bottom: 15px;
       padding: 10px;
-      font-size: 16px;
-      width: 100%;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
     }
-
     button {
       background-color: #001f3f;
       color: white;
-      border: none;
+      font-weight: bold;
       cursor: pointer;
+      transition: background 0.3s ease;
     }
-
-    .hidden {
-      display: none;
+    button:hover {
+      background-color: #003366;
     }
-
     .message {
-      padding: 10px;
-      margin-top: 10px;
-      font-size: 14px;
+      text-align: center;
+      margin-top: 15px;
+      font-weight: bold;
     }
-
     .success {
-      background-color: #e6ffe6;
-      border: 1px solid #8bc34a;
+      color: green;
     }
-
     .error {
-      background-color: #ffe6e6;
-      border: 1px solid #f44336;
+      color: red;
     }
   </style>
 </head>
 <body>
 
-  <h2>Admin Product Upload</h2>
-
-  <!-- Login Section -->
-  <div id="login-section">
-    <input type="password" id="admin-password" placeholder="Enter admin password" required />
-    <button onclick="verifyPassword()">Login</button>
-    <div id="login-error" class="message error hidden">Incorrect password.</div>
-  </div>
-
-  <!-- Upload Form Section -->
-  <form id="upload-form" class="hidden" enctype="multipart/form-data">
-    <input type="text" name="name" placeholder="Product Name" required />
-    <input type="number" name="price" placeholder="Price (₦)" required />
-    
-    <select name="category" required>
-      <option value="">Select Category</option>
-      <option value="shirts">Shirts</option>
-      <option value="trousers">Trousers</option>
-      <option value="shorts">Shorts</option>
-      <option value="senators">Senators</option>
-      <option value="caps">Caps</option>
-    </select>
-    
+  <h2>Upload Product</h2>
+  <form id="uploadForm" enctype="multipart/form-data">
+    <input type="text" name="productName" placeholder="Product Name" required />
+    <input type="number" name="productPrice" placeholder="Price (₦)" required />
+    <input type="number" name="productDiscount" placeholder="Discount (%)" />
+    <input type="text" name="productCategory" placeholder="Category (e.g., Shoes, Shirts)" />
     <input type="file" name="image" accept="image/*" required />
     <button type="submit">Upload Product</button>
-    <div id="upload-message" class="message hidden"></div>
   </form>
 
+  <div id="message" class="message"></div>
+
   <script>
-    const correctPassword = 'thisisjustthebeginning';
+    const form = document.getElementById('uploadForm');
+    const messageDiv = document.getElementById('message');
 
-    function verifyPassword() {
-      const input = document.getElementById('admin-password').value;
-      const error = document.getElementById('login-error');
-      if (input === correctPassword) {
-        document.getElementById('login-section').classList.add('hidden');
-        document.getElementById('upload-form').classList.remove('hidden');
-        error.classList.add('hidden');
-      } else {
-        error.classList.remove('hidden');
-      }
-    }
-
-    document.getElementById('upload-form').addEventListener('submit', async function (e) {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const form = e.target;
       const formData = new FormData(form);
-      const messageBox = document.getElementById('upload-message');
 
       try {
-        const res = await fetch('/admin/upload', {
+        const res = await fetch('/upload', {
           method: 'POST',
-          body: formData
+          body: formData,
         });
 
-        const result = await res.json();
+        const data = await res.json();
 
         if (res.ok) {
-          messageBox.textContent = '✅ Product uploaded successfully!';
-          messageBox.className = 'message success';
+          messageDiv.textContent = '✅ Product uploaded successfully!';
+          messageDiv.className = 'message success';
           form.reset();
         } else {
-          messageBox.textContent = result.error || '❌ Upload failed.';
-          messageBox.className = 'message error';
+          messageDiv.textContent = '❌ Upload failed: ' + (data.error || 'Unknown error');
+          messageDiv.className = 'message error';
         }
       } catch (err) {
-        messageBox.textContent = '❌ Server error while uploading.';
-        messageBox.className = 'message error';
+        messageDiv.textContent = '❌ Error: ' + err.message;
+        messageDiv.className = 'message error';
       }
-
-      messageBox.classList.remove('hidden');
     });
   </script>
 
