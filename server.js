@@ -43,6 +43,7 @@ const storage = new CloudinaryStorage({
   },
 });
 const parser = multer({ storage });
+
 // === Product Upload ===
 app.post('/upload', parser.single('image'), async (req, res) => {
   const { productName, productPrice, productDiscount, productCategory } = req.body;
@@ -56,17 +57,12 @@ app.post('/upload', parser.single('image'), async (req, res) => {
   }
 
   try {
-    // Use the uploaded file’s public ID
     const publicId = req.file.filename || req.file.public_id;
-
-    // Construct context metadata string
     const contextStr = `name=${productName}|price=${productPrice}|discount=${productDiscount}|category=${productCategory}`;
 
-    // Set metadata context on the uploaded image in Cloudinary
     console.log(`📤 Setting Cloudinary context for ${publicId}: ${contextStr}`);
     await cloudinary.uploader.add_context(contextStr, publicId);
 
-    // Respond with upload details
     console.log('✅ Upload successful');
     res.status(200).json({
       message: '✅ Upload successful',
@@ -77,7 +73,13 @@ app.post('/upload', parser.single('image'), async (req, res) => {
       discount: productDiscount,
       category: productCategory,
     });
-  // === Fetch Products ===
+  } catch (error) {
+    console.error('❌ Upload failed:', error.message);
+    res.status(500).json({ error: 'Upload failed', details: error.message });
+  }
+});
+
+// === Fetch Products ===
 app.get('/products', async (req, res) => {
   console.log('🔍 Fetching products from Cloudinary...');
 
@@ -91,7 +93,6 @@ app.get('/products', async (req, res) => {
 
     const products = result.resources.map((item, i) => {
       const context = item.context?.custom || {};
-
       const product = {
         url: item.secure_url,
         name: context.name || 'Unnamed',
@@ -100,7 +101,6 @@ app.get('/products', async (req, res) => {
         category: context.category || 'uncategorized',
         public_id: item.public_id,
       };
-
       console.log(`🛍️ Product ${i + 1}:`, product);
       return product;
     });
@@ -113,19 +113,20 @@ app.get('/products', async (req, res) => {
   }
 });
 
+// === Keep Alive Ping ===
 app.get('/ping', (req, res) => {
   res.send('🏓 Pong');
 });
 
 const SELF_URL = 'https://chicasual-civies-jof8.onrender.com/ping';
-
 setInterval(() => {
   fetch(SELF_URL)
     .then(res => res.text())
     .then(data => console.log(`🔁 Self-ping: ${data}`))
     .catch(err => console.error('⚠️ Self-ping failed:', err.message));
-}, 14 * 60 * 1000); // Ping every 14 minutes (Render sleeps after 15 mins)
+}, 14 * 60 * 1000);
 
+// === Start Server ===
 app.listen(PORT, () => {
   console.log(`✅ Server running at http://localhost:${PORT}`);
 });
