@@ -8,24 +8,19 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// === Debug: Confirm environment variables ===
-console.log('CLOUDINARY_CLOUD_NAME:', process.env.CLOUDINARY_CLOUD_NAME);
-console.log('CLOUDINARY_API_KEY:', process.env.CLOUDINARY_API_KEY);
-console.log('CLOUDINARY_API_SECRET:', process.env.CLOUDINARY_API_SECRET);
-
 // === Middleware ===
 app.use(express.static(path.join(__dirname)));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// === Cloudinary Configuration ===
+// === Cloudinary Config ===
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// === Multer Storage Setup ===
+// === Storage Setup with Custom Metadata ===
 const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
@@ -33,10 +28,10 @@ const storage = new CloudinaryStorage({
     return {
       folder: 'products',
       context: {
-        name: productName,
-        price: productPrice,
-        discount: productDiscount,
-        category: productCategory,
+        'custom.name': productName,
+        'custom.price': productPrice,
+        'custom.discount': productDiscount,
+        'custom.category': productCategory,
       },
       allowed_formats: ['jpg', 'jpeg', 'png'],
     };
@@ -47,17 +42,10 @@ const parser = multer({ storage });
 // === Upload Product Endpoint ===
 app.post('/upload', parser.single('image'), async (req, res) => {
   const { productName, productPrice, productDiscount, productCategory } = req.body;
-  console.log('➡️ Upload request:', req.body);
-
-  if (!req.file) {
-    console.error('❌ No file uploaded');
-    return res.status(400).json({ error: 'No file uploaded' });
-  }
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
   try {
     const publicId = req.file.filename || req.file.public_id;
-    console.log('✅ Uploaded image, publicId:', publicId);
-
     res.status(200).json({
       message: '✅ Upload successful',
       imageUrl: req.file.path,
@@ -68,26 +56,24 @@ app.post('/upload', parser.single('image'), async (req, res) => {
       category: productCategory,
     });
   } catch (error) {
-    console.error('❌ Upload error:', error);
     res.status(500).json({ error: 'Upload failed', details: error.message });
   }
 });
 
-// === Fetch Products Endpoint ===
+// === Fetch All Products Grouped by Category ===
 app.get('/products', async (req, res) => {
-  console.log('🔍 Fetching products from Cloudinary...');
-
   try {
     const result = await cloudinary.search
       .expression('folder:products')
       .sort_by('created_at', 'desc')
       .with_field('context')
-      .max_results(30)
+      .max_results(100)
       .execute();
 
-    const products = result.resources.map((item, index) => {
+    const grouped = {};
+    result.resources.forEach((item) => {
       const ctx = item.context?.custom || {};
-      const p = {
+      const product = {
         url: item.secure_url,
         name: ctx.name || 'Unnamed',
         price: ctx.price || '0',
@@ -95,39 +81,85 @@ app.get('/products', async (req, res) => {
         category: ctx.category || 'uncategorized',
         public_id: item.public_id,
       };
-      console.log(`🛍️ Product ${index + 1}:`, p);
-      return p;
+      const categoryKey = product.category.toLowerCase();
+      if (!grouped[categoryKey]) grouped[categoryKey] = [];
+      grouped[categoryKey].push(product);
     });
 
-    console.log(`✅ ${products.length} products fetched`);
-    res.json({ products });
+    res.json({ grouped });
   } catch (err) {
-    console.error('❌ Error fetching products:', err.message);
     res.status(500).json({ error: 'Failed to fetch products', details: err.message });
   }
 });
 
-// === Delete Product Endpoint ===
+// === Fetch Products by Category ===
+app.get('/products/category', async (req, res) => {
+  const category = req.query.name?.toLowerCase();
+  if (!category) return res.status(400).json({ error: 'Category name is required' });
+
+  try {
+    const result = await cloudinary.search
+      .expression(`folder:products AND context.custom.category=${category}`)
+      .sort_by('created_at', 'desc')
+      .with_field('context')
+      .max_results(100)
+      .execute();
+
+    const products = result.resources.map((item) => {
+      const ctx = item.context?.custom || {};
+      return {
+        url: item.secure_url,
+        name: ctx.name || 'Unnamed',
+        price: ctx.price || '0',
+        discount: ctx.discount || '0',
+        category: ctx.category || 'uncategorized',
+        public_id: item.public_id,
+      };
+    });
+
+    res.json({ category, products });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch category', details: err.message });
+  }
+});
+
+// === Edit/Rename Product Metadata ===
+app.put('/edit/:public_id', async (req, res) => {
+  const { public_id } = req.params;
+  const { name, price, discount, category } = req.body;
+
+  try {
+    const result = await cloudinary.uploader.update_metadata({
+      name,
+      price,
+      discount,
+      category,
+    }, public_id);
+
+    res.json({ message: '✅ Metadata updated', result });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update product', details: err.message });
+  }
+});
+
+// === Delete Product ===
 app.delete('/delete/:public_id', async (req, res) => {
   const { public_id } = req.params;
+
   try {
     const result = await cloudinary.uploader.destroy(public_id);
     if (result.result === 'ok') {
-      console.log(`🗑️ Deleted product: ${public_id}`);
       res.json({ message: '✅ Product deleted successfully' });
     } else {
-      console.warn(`⚠️ Deletion failed for ${public_id}`, result);
       res.status(404).json({ error: 'Product not found or already deleted' });
     }
   } catch (err) {
-    console.error('❌ Error deleting product:', err.message);
     res.status(500).json({ error: 'Failed to delete product', details: err.message });
   }
 });
 
-// === Keep-Alive Ping Endpoint ===
+// === Ping for Keepalive ===
 app.get('/ping', (req, res) => res.send('🏓 Pong'));
-
 setInterval(() => {
   fetch(process.env.SELF_URL)
     .then(r => r.text())
