@@ -74,6 +74,12 @@
       object-fit: contain;
       margin-bottom: 10px;
     }
+
+    h4 {
+      margin-top: 30px;
+      margin-bottom: 10px;
+      color: #001f3f;
+    }
   </style>
 </head>
 <body>
@@ -174,22 +180,1883 @@
         const container = document.getElementById('products-container');
         container.innerHTML = '';
 
-        if (data.products && data.products.length > 0) {
-          document.getElementById('product-list').classList.remove('hidden');
+        const grouped = data.grouped || {};
+        let totalProducts = 0;
+
+        for (const category in grouped) {
+          const products = grouped[category];
+          if (!products.length) continue;
+
+          const categoryTitle = document.createElement('h4');
+          categoryTitle.textContent = category.toUpperCase();
+          container.appendChild(categoryTitle);
+
+          products.forEach(product => {
+            const div = document.createElement('div');
+            div.className = 'product-item';
+            div.innerHTML = `
+              <img src="${product.url}" alt="${product.name}" />
+              <strong>${product.name}</strong><br>
+              ₦${product.price} (${product.discount}% off)<br>
+              Category: ${product.category}<br>
+              <button onclick="deleteProduct('${product.public_id}')">🗑️ Delete</button>
+            `;
+            container.appendChild(div);
+            totalProducts++;
+          });
         }
 
-        data.products.forEach(product => {
-          const div = document.createElement('div');
-          div.className = 'product-item';
-          div.innerHTML = `
-            <img src="${product.url}" alt="${product.name}" />
-            <strong>${product.name}</strong><br>
-            ₦${product.price} (${product.discount}% off)<br>
-            Category: ${product.category}<br>
-            <button onclick="deleteProduct('${product.public_id}')">🗑️ Delete</button>
-          `;
-          container.appendChild(div);
+        if (totalProducts > 0) {
+          document.getElementById('product-list').classList.remove('hidden');
+        }
+      } catch (err) {
+        console.error('Error loading products:', err);
+      }
+    }
+
+    async function deleteProduct(publicId) {
+      if (!confirm('Are you sure you want to delete this product?')) return;
+      try {
+        const res = await fetch(`/delete/${publicId}`, { method: 'DELETE' });
+        const result = await res.json();
+        alert(result.message || 'Product deleted');
+        fetchProducts();
+      } catch (err) {
+        alert('❌ Error deleting product.');
+      }
+    }
+  </script>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ChiCasual Admin Panel</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 40px;
+      max-width: 600px;
+      margin: auto;
+    }
+
+    h2 {
+      color: #001f3f;
+      margin-bottom: 20px;
+    }
+
+    input, select, button {
+      margin-bottom: 15px;
+      padding: 10px;
+      font-size: 16px;
+      width: 100%;
+    }
+
+    button {
+      background-color: #001f3f;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background-color: #aaa;
+      cursor: not-allowed;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .message {
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .success {
+      background-color: #e6ffe6;
+      border: 1px solid #8bc34a;
+    }
+
+    .error {
+      background-color: #ffe6e6;
+      border: 1px solid #f44336;
+    }
+
+    .product-list {
+      margin-top: 30px;
+    }
+
+    .product-item {
+      background: #fff;
+      padding: 10px;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+    }
+
+    .product-item img {
+      width: 100%;
+      max-height: 200px;
+      object-fit: contain;
+      margin-bottom: 10px;
+    }
+
+    h4 {
+      margin-top: 30px;
+      margin-bottom: 10px;
+      color: #001f3f;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Admin Product Upload</h2>
+
+  <!-- Login Section -->
+  <div id="login-section">
+    <input type="password" id="admin-password" placeholder="Enter admin password" required />
+    <button onclick="verifyPassword()">Login</button>
+    <div id="login-error" class="message error hidden">Incorrect password.</div>
+  </div>
+
+  <!-- Upload Form Section -->
+  <form id="upload-form" class="hidden" enctype="multipart/form-data">
+    <input type="text" name="productName" placeholder="Product Name" required />
+    <input type="number" name="productPrice" placeholder="Price (₦)" required />
+    
+    <select name="productCategory" required>
+      <option value="">Select Category</option>
+      <option value="shoe">Shoe</option>
+      <option value="senators">Senators</option>
+      <option value="caps">Caps</option>
+      <option value="shirts">Shirts</option>
+      <option value="shorts">Shorts</option>
+      <option value="trousers">Trousers</option>
+    </select>
+
+    <input type="number" name="productDiscount" placeholder="Discount (%)" />
+    <input type="file" name="image" accept="image/*" required />
+    <input type="hidden" name="adminPassword" id="hidden-password" />
+    <button type="submit" id="upload-btn">Upload Product</button>
+    <div id="upload-message" class="message hidden"></div>
+  </form>
+
+  <div class="product-list hidden" id="product-list">
+    <h3>Uploaded Products</h3>
+    <div id="products-container"></div>
+  </div>
+
+  <script>
+    const correctPassword = 'thisisjustthebeginning';
+
+    function verifyPassword() {
+      const input = document.getElementById('admin-password').value;
+      const error = document.getElementById('login-error');
+      if (input === correctPassword) {
+        document.getElementById('login-section').classList.add('hidden');
+        document.getElementById('upload-form').classList.remove('hidden');
+        document.getElementById('hidden-password').value = input;
+        fetchProducts();
+      } else {
+        error.classList.remove('hidden');
+      }
+    }
+
+    document.getElementById('upload-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+      const messageBox = document.getElementById('upload-message');
+      const uploadBtn = document.getElementById('upload-btn');
+
+      uploadBtn.disabled = true;
+      uploadBtn.textContent = 'Uploading...';
+
+      try {
+        const res = await fetch('/upload', {
+          method: 'POST',
+          body: formData
         });
+
+        const result = await res.json();
+
+        if (res.ok) {
+          messageBox.textContent = '✅ Product uploaded successfully!';
+          messageBox.className = 'message success';
+          form.reset();
+          fetchProducts();
+        } else {
+          messageBox.textContent = result.error || '❌ Upload failed.';
+          messageBox.className = 'message error';
+        }
+      } catch (err) {
+        messageBox.textContent = '❌ Server error while uploading.';
+        messageBox.className = 'message error';
+      }
+
+      messageBox.classList.remove('hidden');
+      uploadBtn.disabled = false;
+      uploadBtn.textContent = 'Upload Product';
+    });
+
+    async function fetchProducts() {
+      try {
+        const res = await fetch('/products');
+        const data = await res.json();
+        const container = document.getElementById('products-container');
+        container.innerHTML = '';
+
+        const grouped = data.grouped || {};
+        let totalProducts = 0;
+
+        for (const category in grouped) {
+          const products = grouped[category];
+          if (!products.length) continue;
+
+          const categoryTitle = document.createElement('h4');
+          categoryTitle.textContent = category.toUpperCase();
+          container.appendChild(categoryTitle);
+
+          products.forEach(product => {
+            const div = document.createElement('div');
+            div.className = 'product-item';
+            div.innerHTML = `
+              <img src="${product.url}" alt="${product.name}" />
+              <strong>${product.name}</strong><br>
+              ₦${product.price} (${product.discount}% off)<br>
+              Category: ${product.category}<br>
+              <button onclick="deleteProduct('${product.public_id}')">🗑️ Delete</button>
+            `;
+            container.appendChild(div);
+            totalProducts++;
+          });
+        }
+
+        if (totalProducts > 0) {
+          document.getElementById('product-list').classList.remove('hidden');
+        }
+      } catch (err) {
+        console.error('Error loading products:', err);
+      }
+    }
+
+    async function deleteProduct(publicId) {
+      if (!confirm('Are you sure you want to delete this product?')) return;
+      try {
+        const res = await fetch(`/delete/${publicId}`, { method: 'DELETE' });
+        const result = await res.json();
+        alert(result.message || 'Product deleted');
+        fetchProducts();
+      } catch (err) {
+        alert('❌ Error deleting product.');
+      }
+    }
+  </script>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ChiCasual Admin Panel</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 40px;
+      max-width: 600px;
+      margin: auto;
+    }
+
+    h2 {
+      color: #001f3f;
+      margin-bottom: 20px;
+    }
+
+    input, select, button {
+      margin-bottom: 15px;
+      padding: 10px;
+      font-size: 16px;
+      width: 100%;
+    }
+
+    button {
+      background-color: #001f3f;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background-color: #aaa;
+      cursor: not-allowed;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .message {
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .success {
+      background-color: #e6ffe6;
+      border: 1px solid #8bc34a;
+    }
+
+    .error {
+      background-color: #ffe6e6;
+      border: 1px solid #f44336;
+    }
+
+    .product-list {
+      margin-top: 30px;
+    }
+
+    .product-item {
+      background: #fff;
+      padding: 10px;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+    }
+
+    .product-item img {
+      width: 100%;
+      max-height: 200px;
+      object-fit: contain;
+      margin-bottom: 10px;
+    }
+
+    h4 {
+      margin-top: 30px;
+      margin-bottom: 10px;
+      color: #001f3f;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Admin Product Upload</h2>
+
+  <!-- Login Section -->
+  <div id="login-section">
+    <input type="password" id="admin-password" placeholder="Enter admin password" required />
+    <button onclick="verifyPassword()">Login</button>
+    <div id="login-error" class="message error hidden">Incorrect password.</div>
+  </div>
+
+  <!-- Upload Form Section -->
+  <form id="upload-form" class="hidden" enctype="multipart/form-data">
+    <input type="text" name="productName" placeholder="Product Name" required />
+    <input type="number" name="productPrice" placeholder="Price (₦)" required />
+    
+    <select name="productCategory" required>
+      <option value="">Select Category</option>
+      <option value="shoe">Shoe</option>
+      <option value="senators">Senators</option>
+      <option value="caps">Caps</option>
+      <option value="shirts">Shirts</option>
+      <option value="shorts">Shorts</option>
+      <option value="trousers">Trousers</option>
+    </select>
+
+    <input type="number" name="productDiscount" placeholder="Discount (%)" />
+    <input type="file" name="image" accept="image/*" required />
+    <input type="hidden" name="adminPassword" id="hidden-password" />
+    <button type="submit" id="upload-btn">Upload Product</button>
+    <div id="upload-message" class="message hidden"></div>
+  </form>
+
+  <div class="product-list hidden" id="product-list">
+    <h3>Uploaded Products</h3>
+    <div id="products-container"></div>
+  </div>
+
+  <script>
+    const correctPassword = 'thisisjustthebeginning';
+
+    function verifyPassword() {
+      const input = document.getElementById('admin-password').value;
+      const error = document.getElementById('login-error');
+      if (input === correctPassword) {
+        document.getElementById('login-section').classList.add('hidden');
+        document.getElementById('upload-form').classList.remove('hidden');
+        document.getElementById('hidden-password').value = input;
+        fetchProducts();
+      } else {
+        error.classList.remove('hidden');
+      }
+    }
+
+    document.getElementById('upload-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+      const messageBox = document.getElementById('upload-message');
+      const uploadBtn = document.getElementById('upload-btn');
+
+      uploadBtn.disabled = true;
+      uploadBtn.textContent = 'Uploading...';
+
+      try {
+        const res = await fetch('/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+          messageBox.textContent = '✅ Product uploaded successfully!';
+          messageBox.className = 'message success';
+          form.reset();
+          fetchProducts();
+        } else {
+          messageBox.textContent = result.error || '❌ Upload failed.';
+          messageBox.className = 'message error';
+        }
+      } catch (err) {
+        messageBox.textContent = '❌ Server error while uploading.';
+        messageBox.className = 'message error';
+      }
+
+      messageBox.classList.remove('hidden');
+      uploadBtn.disabled = false;
+      uploadBtn.textContent = 'Upload Product';
+    });
+
+    async function fetchProducts() {
+      try {
+        const res = await fetch('/products');
+        const data = await res.json();
+        const container = document.getElementById('products-container');
+        container.innerHTML = '';
+
+        const grouped = data.grouped || {};
+        let totalProducts = 0;
+
+        for (const category in grouped) {
+          const products = grouped[category];
+          if (!products.length) continue;
+
+          const categoryTitle = document.createElement('h4');
+          categoryTitle.textContent = category.toUpperCase();
+          container.appendChild(categoryTitle);
+
+          products.forEach(product => {
+            const div = document.createElement('div');
+            div.className = 'product-item';
+            div.innerHTML = `
+              <img src="${product.url}" alt="${product.name}" />
+              <strong>${product.name}</strong><br>
+              ₦${product.price} (${product.discount}% off)<br>
+              Category: ${product.category}<br>
+              <button onclick="deleteProduct('${product.public_id}')">🗑️ Delete</button>
+            `;
+            container.appendChild(div);
+            totalProducts++;
+          });
+        }
+
+        if (totalProducts > 0) {
+          document.getElementById('product-list').classList.remove('hidden');
+        }
+      } catch (err) {
+        console.error('Error loading products:', err);
+      }
+    }
+
+    async function deleteProduct(publicId) {
+      if (!confirm('Are you sure you want to delete this product?')) return;
+      try {
+        const res = await fetch(`/delete/${publicId}`, { method: 'DELETE' });
+        const result = await res.json();
+        alert(result.message || 'Product deleted');
+        fetchProducts();
+      } catch (err) {
+        alert('❌ Error deleting product.');
+      }
+    }
+  </script>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ChiCasual Admin Panel</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 40px;
+      max-width: 600px;
+      margin: auto;
+    }
+
+    h2 {
+      color: #001f3f;
+      margin-bottom: 20px;
+    }
+
+    input, select, button {
+      margin-bottom: 15px;
+      padding: 10px;
+      font-size: 16px;
+      width: 100%;
+    }
+
+    button {
+      background-color: #001f3f;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background-color: #aaa;
+      cursor: not-allowed;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .message {
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .success {
+      background-color: #e6ffe6;
+      border: 1px solid #8bc34a;
+    }
+
+    .error {
+      background-color: #ffe6e6;
+      border: 1px solid #f44336;
+    }
+
+    .product-list {
+      margin-top: 30px;
+    }
+
+    .product-item {
+      background: #fff;
+      padding: 10px;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+    }
+
+    .product-item img {
+      width: 100%;
+      max-height: 200px;
+      object-fit: contain;
+      margin-bottom: 10px;
+    }
+
+    h4 {
+      margin-top: 30px;
+      margin-bottom: 10px;
+      color: #001f3f;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Admin Product Upload</h2>
+
+  <!-- Login Section -->
+  <div id="login-section">
+    <input type="password" id="admin-password" placeholder="Enter admin password" required />
+    <button onclick="verifyPassword()">Login</button>
+    <div id="login-error" class="message error hidden">Incorrect password.</div>
+  </div>
+
+  <!-- Upload Form Section -->
+  <form id="upload-form" class="hidden" enctype="multipart/form-data">
+    <input type="text" name="productName" placeholder="Product Name" required />
+    <input type="number" name="productPrice" placeholder="Price (₦)" required />
+    
+    <select name="productCategory" required>
+      <option value="">Select Category</option>
+      <option value="shoe">Shoe</option>
+      <option value="senators">Senators</option>
+      <option value="caps">Caps</option>
+      <option value="shirts">Shirts</option>
+      <option value="shorts">Shorts</option>
+      <option value="trousers">Trousers</option>
+    </select>
+
+    <input type="number" name="productDiscount" placeholder="Discount (%)" />
+    <input type="file" name="image" accept="image/*" required />
+    <input type="hidden" name="adminPassword" id="hidden-password" />
+    <button type="submit" id="upload-btn">Upload Product</button>
+    <div id="upload-message" class="message hidden"></div>
+  </form>
+
+  <div class="product-list hidden" id="product-list">
+    <h3>Uploaded Products</h3>
+    <div id="products-container"></div>
+  </div>
+
+  <script>
+    const correctPassword = 'thisisjustthebeginning';
+
+    function verifyPassword() {
+      const input = document.getElementById('admin-password').value;
+      const error = document.getElementById('login-error');
+      if (input === correctPassword) {
+        document.getElementById('login-section').classList.add('hidden');
+        document.getElementById('upload-form').classList.remove('hidden');
+        document.getElementById('hidden-password').value = input;
+        fetchProducts();
+      } else {
+        error.classList.remove('hidden');
+      }
+    }
+
+    document.getElementById('upload-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+      const messageBox = document.getElementById('upload-message');
+      const uploadBtn = document.getElementById('upload-btn');
+
+      uploadBtn.disabled = true;
+      uploadBtn.textContent = 'Uploading...';
+
+      try {
+        const res = await fetch('/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+          messageBox.textContent = '✅ Product uploaded successfully!';
+          messageBox.className = 'message success';
+          form.reset();
+          fetchProducts();
+        } else {
+          messageBox.textContent = result.error || '❌ Upload failed.';
+          messageBox.className = 'message error';
+        }
+      } catch (err) {
+        messageBox.textContent = '❌ Server error while uploading.';
+        messageBox.className = 'message error';
+      }
+
+      messageBox.classList.remove('hidden');
+      uploadBtn.disabled = false;
+      uploadBtn.textContent = 'Upload Product';
+    });
+
+    async function fetchProducts() {
+      try {
+        const res = await fetch('/products');
+        const data = await res.json();
+        const container = document.getElementById('products-container');
+        container.innerHTML = '';
+
+        const grouped = data.grouped || {};
+        let totalProducts = 0;
+
+        for (const category in grouped) {
+          const products = grouped[category];
+          if (!products.length) continue;
+
+          const categoryTitle = document.createElement('h4');
+          categoryTitle.textContent = category.toUpperCase();
+          container.appendChild(categoryTitle);
+
+          products.forEach(product => {
+            const div = document.createElement('div');
+            div.className = 'product-item';
+            div.innerHTML = `
+              <img src="${product.url}" alt="${product.name}" />
+              <strong>${product.name}</strong><br>
+              ₦${product.price} (${product.discount}% off)<br>
+              Category: ${product.category}<br>
+              <button onclick="deleteProduct('${product.public_id}')">🗑️ Delete</button>
+            `;
+            container.appendChild(div);
+            totalProducts++;
+          });
+        }
+
+        if (totalProducts > 0) {
+          document.getElementById('product-list').classList.remove('hidden');
+        }
+      } catch (err) {
+        console.error('Error loading products:', err);
+      }
+    }
+
+    async function deleteProduct(publicId) {
+      if (!confirm('Are you sure you want to delete this product?')) return;
+      try {
+        const res = await fetch(`/delete/${publicId}`, { method: 'DELETE' });
+        const result = await res.json();
+        alert(result.message || 'Product deleted');
+        fetchProducts();
+      } catch (err) {
+        alert('❌ Error deleting product.');
+      }
+    }
+  </script>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ChiCasual Admin Panel</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 40px;
+      max-width: 600px;
+      margin: auto;
+    }
+
+    h2 {
+      color: #001f3f;
+      margin-bottom: 20px;
+    }
+
+    input, select, button {
+      margin-bottom: 15px;
+      padding: 10px;
+      font-size: 16px;
+      width: 100%;
+    }
+
+    button {
+      background-color: #001f3f;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background-color: #aaa;
+      cursor: not-allowed;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .message {
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .success {
+      background-color: #e6ffe6;
+      border: 1px solid #8bc34a;
+    }
+
+    .error {
+      background-color: #ffe6e6;
+      border: 1px solid #f44336;
+    }
+
+    .product-list {
+      margin-top: 30px;
+    }
+
+    .product-item {
+      background: #fff;
+      padding: 10px;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+    }
+
+    .product-item img {
+      width: 100%;
+      max-height: 200px;
+      object-fit: contain;
+      margin-bottom: 10px;
+    }
+
+    h4 {
+      margin-top: 30px;
+      margin-bottom: 10px;
+      color: #001f3f;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Admin Product Upload</h2>
+
+  <!-- Login Section -->
+  <div id="login-section">
+    <input type="password" id="admin-password" placeholder="Enter admin password" required />
+    <button onclick="verifyPassword()">Login</button>
+    <div id="login-error" class="message error hidden">Incorrect password.</div>
+  </div>
+
+  <!-- Upload Form Section -->
+  <form id="upload-form" class="hidden" enctype="multipart/form-data">
+    <input type="text" name="productName" placeholder="Product Name" required />
+    <input type="number" name="productPrice" placeholder="Price (₦)" required />
+    
+    <select name="productCategory" required>
+      <option value="">Select Category</option>
+      <option value="shoe">Shoe</option>
+      <option value="senators">Senators</option>
+      <option value="caps">Caps</option>
+      <option value="shirts">Shirts</option>
+      <option value="shorts">Shorts</option>
+      <option value="trousers">Trousers</option>
+    </select>
+
+    <input type="number" name="productDiscount" placeholder="Discount (%)" />
+    <input type="file" name="image" accept="image/*" required />
+    <input type="hidden" name="adminPassword" id="hidden-password" />
+    <button type="submit" id="upload-btn">Upload Product</button>
+    <div id="upload-message" class="message hidden"></div>
+  </form>
+
+  <div class="product-list hidden" id="product-list">
+    <h3>Uploaded Products</h3>
+    <div id="products-container"></div>
+  </div>
+
+  <script>
+    const correctPassword = 'thisisjustthebeginning';
+
+    function verifyPassword() {
+      const input = document.getElementById('admin-password').value;
+      const error = document.getElementById('login-error');
+      if (input === correctPassword) {
+        document.getElementById('login-section').classList.add('hidden');
+        document.getElementById('upload-form').classList.remove('hidden');
+        document.getElementById('hidden-password').value = input;
+        fetchProducts();
+      } else {
+        error.classList.remove('hidden');
+      }
+    }
+
+    document.getElementById('upload-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+      const messageBox = document.getElementById('upload-message');
+      const uploadBtn = document.getElementById('upload-btn');
+
+      uploadBtn.disabled = true;
+      uploadBtn.textContent = 'Uploading...';
+
+      try {
+        const res = await fetch('/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+          messageBox.textContent = '✅ Product uploaded successfully!';
+          messageBox.className = 'message success';
+          form.reset();
+          fetchProducts();
+        } else {
+          messageBox.textContent = result.error || '❌ Upload failed.';
+          messageBox.className = 'message error';
+        }
+      } catch (err) {
+        messageBox.textContent = '❌ Server error while uploading.';
+        messageBox.className = 'message error';
+      }
+
+      messageBox.classList.remove('hidden');
+      uploadBtn.disabled = false;
+      uploadBtn.textContent = 'Upload Product';
+    });
+
+    async function fetchProducts() {
+      try {
+        const res = await fetch('/products');
+        const data = await res.json();
+        const container = document.getElementById('products-container');
+        container.innerHTML = '';
+
+        const grouped = data.grouped || {};
+        let totalProducts = 0;
+
+        for (const category in grouped) {
+          const products = grouped[category];
+          if (!products.length) continue;
+
+          const categoryTitle = document.createElement('h4');
+          categoryTitle.textContent = category.toUpperCase();
+          container.appendChild(categoryTitle);
+
+          products.forEach(product => {
+            const div = document.createElement('div');
+            div.className = 'product-item';
+            div.innerHTML = `
+              <img src="${product.url}" alt="${product.name}" />
+              <strong>${product.name}</strong><br>
+              ₦${product.price} (${product.discount}% off)<br>
+              Category: ${product.category}<br>
+              <button onclick="deleteProduct('${product.public_id}')">🗑️ Delete</button>
+            `;
+            container.appendChild(div);
+            totalProducts++;
+          });
+        }
+
+        if (totalProducts > 0) {
+          document.getElementById('product-list').classList.remove('hidden');
+        }
+      } catch (err) {
+        console.error('Error loading products:', err);
+      }
+    }
+
+    async function deleteProduct(publicId) {
+      if (!confirm('Are you sure you want to delete this product?')) return;
+      try {
+        const res = await fetch(`/delete/${publicId}`, { method: 'DELETE' });
+        const result = await res.json();
+        alert(result.message || 'Product deleted');
+        fetchProducts();
+      } catch (err) {
+        alert('❌ Error deleting product.');
+      }
+    }
+  </script>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ChiCasual Admin Panel</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 40px;
+      max-width: 600px;
+      margin: auto;
+    }
+
+    h2 {
+      color: #001f3f;
+      margin-bottom: 20px;
+    }
+
+    input, select, button {
+      margin-bottom: 15px;
+      padding: 10px;
+      font-size: 16px;
+      width: 100%;
+    }
+
+    button {
+      background-color: #001f3f;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background-color: #aaa;
+      cursor: not-allowed;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .message {
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .success {
+      background-color: #e6ffe6;
+      border: 1px solid #8bc34a;
+    }
+
+    .error {
+      background-color: #ffe6e6;
+      border: 1px solid #f44336;
+    }
+
+    .product-list {
+      margin-top: 30px;
+    }
+
+    .product-item {
+      background: #fff;
+      padding: 10px;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+    }
+
+    .product-item img {
+      width: 100%;
+      max-height: 200px;
+      object-fit: contain;
+      margin-bottom: 10px;
+    }
+
+    h4 {
+      margin-top: 30px;
+      margin-bottom: 10px;
+      color: #001f3f;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Admin Product Upload</h2>
+
+  <!-- Login Section -->
+  <div id="login-section">
+    <input type="password" id="admin-password" placeholder="Enter admin password" required />
+    <button onclick="verifyPassword()">Login</button>
+    <div id="login-error" class="message error hidden">Incorrect password.</div>
+  </div>
+
+  <!-- Upload Form Section -->
+  <form id="upload-form" class="hidden" enctype="multipart/form-data">
+    <input type="text" name="productName" placeholder="Product Name" required />
+    <input type="number" name="productPrice" placeholder="Price (₦)" required />
+    
+    <select name="productCategory" required>
+      <option value="">Select Category</option>
+      <option value="shoe">Shoe</option>
+      <option value="senators">Senators</option>
+      <option value="caps">Caps</option>
+      <option value="shirts">Shirts</option>
+      <option value="shorts">Shorts</option>
+      <option value="trousers">Trousers</option>
+    </select>
+
+    <input type="number" name="productDiscount" placeholder="Discount (%)" />
+    <input type="file" name="image" accept="image/*" required />
+    <input type="hidden" name="adminPassword" id="hidden-password" />
+    <button type="submit" id="upload-btn">Upload Product</button>
+    <div id="upload-message" class="message hidden"></div>
+  </form>
+
+  <div class="product-list hidden" id="product-list">
+    <h3>Uploaded Products</h3>
+    <div id="products-container"></div>
+  </div>
+
+  <script>
+    const correctPassword = 'thisisjustthebeginning';
+
+    function verifyPassword() {
+      const input = document.getElementById('admin-password').value;
+      const error = document.getElementById('login-error');
+      if (input === correctPassword) {
+        document.getElementById('login-section').classList.add('hidden');
+        document.getElementById('upload-form').classList.remove('hidden');
+        document.getElementById('hidden-password').value = input;
+        fetchProducts();
+      } else {
+        error.classList.remove('hidden');
+      }
+    }
+
+    document.getElementById('upload-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+      const messageBox = document.getElementById('upload-message');
+      const uploadBtn = document.getElementById('upload-btn');
+
+      uploadBtn.disabled = true;
+      uploadBtn.textContent = 'Uploading...';
+
+      try {
+        const res = await fetch('/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+          messageBox.textContent = '✅ Product uploaded successfully!';
+          messageBox.className = 'message success';
+          form.reset();
+          fetchProducts();
+        } else {
+          messageBox.textContent = result.error || '❌ Upload failed.';
+          messageBox.className = 'message error';
+        }
+      } catch (err) {
+        messageBox.textContent = '❌ Server error while uploading.';
+        messageBox.className = 'message error';
+      }
+
+      messageBox.classList.remove('hidden');
+      uploadBtn.disabled = false;
+      uploadBtn.textContent = 'Upload Product';
+    });
+
+    async function fetchProducts() {
+      try {
+        const res = await fetch('/products');
+        const data = await res.json();
+        const container = document.getElementById('products-container');
+        container.innerHTML = '';
+
+        const grouped = data.grouped || {};
+        let totalProducts = 0;
+
+        for (const category in grouped) {
+          const products = grouped[category];
+          if (!products.length) continue;
+
+          const categoryTitle = document.createElement('h4');
+          categoryTitle.textContent = category.toUpperCase();
+          container.appendChild(categoryTitle);
+
+          products.forEach(product => {
+            const div = document.createElement('div');
+            div.className = 'product-item';
+            div.innerHTML = `
+              <img src="${product.url}" alt="${product.name}" />
+              <strong>${product.name}</strong><br>
+              ₦${product.price} (${product.discount}% off)<br>
+              Category: ${product.category}<br>
+              <button onclick="deleteProduct('${product.public_id}')">🗑️ Delete</button>
+            `;
+            container.appendChild(div);
+            totalProducts++;
+          });
+        }
+
+        if (totalProducts > 0) {
+          document.getElementById('product-list').classList.remove('hidden');
+        }
+      } catch (err) {
+        console.error('Error loading products:', err);
+      }
+    }
+
+    async function deleteProduct(publicId) {
+      if (!confirm('Are you sure you want to delete this product?')) return;
+      try {
+        const res = await fetch(`/delete/${publicId}`, { method: 'DELETE' });
+        const result = await res.json();
+        alert(result.message || 'Product deleted');
+        fetchProducts();
+      } catch (err) {
+        alert('❌ Error deleting product.');
+      }
+    }
+  </script>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ChiCasual Admin Panel</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 40px;
+      max-width: 600px;
+      margin: auto;
+    }
+
+    h2 {
+      color: #001f3f;
+      margin-bottom: 20px;
+    }
+
+    input, select, button {
+      margin-bottom: 15px;
+      padding: 10px;
+      font-size: 16px;
+      width: 100%;
+    }
+
+    button {
+      background-color: #001f3f;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background-color: #aaa;
+      cursor: not-allowed;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .message {
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .success {
+      background-color: #e6ffe6;
+      border: 1px solid #8bc34a;
+    }
+
+    .error {
+      background-color: #ffe6e6;
+      border: 1px solid #f44336;
+    }
+
+    .product-list {
+      margin-top: 30px;
+    }
+
+    .product-item {
+      background: #fff;
+      padding: 10px;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+    }
+
+    .product-item img {
+      width: 100%;
+      max-height: 200px;
+      object-fit: contain;
+      margin-bottom: 10px;
+    }
+
+    h4 {
+      margin-top: 30px;
+      margin-bottom: 10px;
+      color: #001f3f;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Admin Product Upload</h2>
+
+  <!-- Login Section -->
+  <div id="login-section">
+    <input type="password" id="admin-password" placeholder="Enter admin password" required />
+    <button onclick="verifyPassword()">Login</button>
+    <div id="login-error" class="message error hidden">Incorrect password.</div>
+  </div>
+
+  <!-- Upload Form Section -->
+  <form id="upload-form" class="hidden" enctype="multipart/form-data">
+    <input type="text" name="productName" placeholder="Product Name" required />
+    <input type="number" name="productPrice" placeholder="Price (₦)" required />
+    
+    <select name="productCategory" required>
+      <option value="">Select Category</option>
+      <option value="shoe">Shoe</option>
+      <option value="senators">Senators</option>
+      <option value="caps">Caps</option>
+      <option value="shirts">Shirts</option>
+      <option value="shorts">Shorts</option>
+      <option value="trousers">Trousers</option>
+    </select>
+
+    <input type="number" name="productDiscount" placeholder="Discount (%)" />
+    <input type="file" name="image" accept="image/*" required />
+    <input type="hidden" name="adminPassword" id="hidden-password" />
+    <button type="submit" id="upload-btn">Upload Product</button>
+    <div id="upload-message" class="message hidden"></div>
+  </form>
+
+  <div class="product-list hidden" id="product-list">
+    <h3>Uploaded Products</h3>
+    <div id="products-container"></div>
+  </div>
+
+  <script>
+    const correctPassword = 'thisisjustthebeginning';
+
+    function verifyPassword() {
+      const input = document.getElementById('admin-password').value;
+      const error = document.getElementById('login-error');
+      if (input === correctPassword) {
+        document.getElementById('login-section').classList.add('hidden');
+        document.getElementById('upload-form').classList.remove('hidden');
+        document.getElementById('hidden-password').value = input;
+        fetchProducts();
+      } else {
+        error.classList.remove('hidden');
+      }
+    }
+
+    document.getElementById('upload-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+      const messageBox = document.getElementById('upload-message');
+      const uploadBtn = document.getElementById('upload-btn');
+
+      uploadBtn.disabled = true;
+      uploadBtn.textContent = 'Uploading...';
+
+      try {
+        const res = await fetch('/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+          messageBox.textContent = '✅ Product uploaded successfully!';
+          messageBox.className = 'message success';
+          form.reset();
+          fetchProducts();
+        } else {
+          messageBox.textContent = result.error || '❌ Upload failed.';
+          messageBox.className = 'message error';
+        }
+      } catch (err) {
+        messageBox.textContent = '❌ Server error while uploading.';
+        messageBox.className = 'message error';
+      }
+
+      messageBox.classList.remove('hidden');
+      uploadBtn.disabled = false;
+      uploadBtn.textContent = 'Upload Product';
+    });
+
+    async function fetchProducts() {
+      try {
+        const res = await fetch('/products');
+        const data = await res.json();
+        const container = document.getElementById('products-container');
+        container.innerHTML = '';
+
+        const grouped = data.grouped || {};
+        let totalProducts = 0;
+
+        for (const category in grouped) {
+          const products = grouped[category];
+          if (!products.length) continue;
+
+          const categoryTitle = document.createElement('h4');
+          categoryTitle.textContent = category.toUpperCase();
+          container.appendChild(categoryTitle);
+
+          products.forEach(product => {
+            const div = document.createElement('div');
+            div.className = 'product-item';
+            div.innerHTML = `
+              <img src="${product.url}" alt="${product.name}" />
+              <strong>${product.name}</strong><br>
+              ₦${product.price} (${product.discount}% off)<br>
+              Category: ${product.category}<br>
+              <button onclick="deleteProduct('${product.public_id}')">🗑️ Delete</button>
+            `;
+            container.appendChild(div);
+            totalProducts++;
+          });
+        }
+
+        if (totalProducts > 0) {
+          document.getElementById('product-list').classList.remove('hidden');
+        }
+      } catch (err) {
+        console.error('Error loading products:', err);
+      }
+    }
+
+    async function deleteProduct(publicId) {
+      if (!confirm('Are you sure you want to delete this product?')) return;
+      try {
+        const res = await fetch(`/delete/${publicId}`, { method: 'DELETE' });
+        const result = await res.json();
+        alert(result.message || 'Product deleted');
+        fetchProducts();
+      } catch (err) {
+        alert('❌ Error deleting product.');
+      }
+    }
+  </script>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ChiCasual Admin Panel</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 40px;
+      max-width: 600px;
+      margin: auto;
+    }
+
+    h2 {
+      color: #001f3f;
+      margin-bottom: 20px;
+    }
+
+    input, select, button {
+      margin-bottom: 15px;
+      padding: 10px;
+      font-size: 16px;
+      width: 100%;
+    }
+
+    button {
+      background-color: #001f3f;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background-color: #aaa;
+      cursor: not-allowed;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .message {
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .success {
+      background-color: #e6ffe6;
+      border: 1px solid #8bc34a;
+    }
+
+    .error {
+      background-color: #ffe6e6;
+      border: 1px solid #f44336;
+    }
+
+    .product-list {
+      margin-top: 30px;
+    }
+
+    .product-item {
+      background: #fff;
+      padding: 10px;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+    }
+
+    .product-item img {
+      width: 100%;
+      max-height: 200px;
+      object-fit: contain;
+      margin-bottom: 10px;
+    }
+
+    h4 {
+      margin-top: 30px;
+      margin-bottom: 10px;
+      color: #001f3f;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Admin Product Upload</h2>
+
+  <!-- Login Section -->
+  <div id="login-section">
+    <input type="password" id="admin-password" placeholder="Enter admin password" required />
+    <button onclick="verifyPassword()">Login</button>
+    <div id="login-error" class="message error hidden">Incorrect password.</div>
+  </div>
+
+  <!-- Upload Form Section -->
+  <form id="upload-form" class="hidden" enctype="multipart/form-data">
+    <input type="text" name="productName" placeholder="Product Name" required />
+    <input type="number" name="productPrice" placeholder="Price (₦)" required />
+    
+    <select name="productCategory" required>
+      <option value="">Select Category</option>
+      <option value="shoe">Shoe</option>
+      <option value="senators">Senators</option>
+      <option value="caps">Caps</option>
+      <option value="shirts">Shirts</option>
+      <option value="shorts">Shorts</option>
+      <option value="trousers">Trousers</option>
+    </select>
+
+    <input type="number" name="productDiscount" placeholder="Discount (%)" />
+    <input type="file" name="image" accept="image/*" required />
+    <input type="hidden" name="adminPassword" id="hidden-password" />
+    <button type="submit" id="upload-btn">Upload Product</button>
+    <div id="upload-message" class="message hidden"></div>
+  </form>
+
+  <div class="product-list hidden" id="product-list">
+    <h3>Uploaded Products</h3>
+    <div id="products-container"></div>
+  </div>
+
+  <script>
+    const correctPassword = 'thisisjustthebeginning';
+
+    function verifyPassword() {
+      const input = document.getElementById('admin-password').value;
+      const error = document.getElementById('login-error');
+      if (input === correctPassword) {
+        document.getElementById('login-section').classList.add('hidden');
+        document.getElementById('upload-form').classList.remove('hidden');
+        document.getElementById('hidden-password').value = input;
+        fetchProducts();
+      } else {
+        error.classList.remove('hidden');
+      }
+    }
+
+    document.getElementById('upload-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+      const messageBox = document.getElementById('upload-message');
+      const uploadBtn = document.getElementById('upload-btn');
+
+      uploadBtn.disabled = true;
+      uploadBtn.textContent = 'Uploading...';
+
+      try {
+        const res = await fetch('/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+          messageBox.textContent = '✅ Product uploaded successfully!';
+          messageBox.className = 'message success';
+          form.reset();
+          fetchProducts();
+        } else {
+          messageBox.textContent = result.error || '❌ Upload failed.';
+          messageBox.className = 'message error';
+        }
+      } catch (err) {
+        messageBox.textContent = '❌ Server error while uploading.';
+        messageBox.className = 'message error';
+      }
+
+      messageBox.classList.remove('hidden');
+      uploadBtn.disabled = false;
+      uploadBtn.textContent = 'Upload Product';
+    });
+
+    async function fetchProducts() {
+      try {
+        const res = await fetch('/products');
+        const data = await res.json();
+        const container = document.getElementById('products-container');
+        container.innerHTML = '';
+
+        const grouped = data.grouped || {};
+        let totalProducts = 0;
+
+        for (const category in grouped) {
+          const products = grouped[category];
+          if (!products.length) continue;
+
+          const categoryTitle = document.createElement('h4');
+          categoryTitle.textContent = category.toUpperCase();
+          container.appendChild(categoryTitle);
+
+          products.forEach(product => {
+            const div = document.createElement('div');
+            div.className = 'product-item';
+            div.innerHTML = `
+              <img src="${product.url}" alt="${product.name}" />
+              <strong>${product.name}</strong><br>
+              ₦${product.price} (${product.discount}% off)<br>
+              Category: ${product.category}<br>
+              <button onclick="deleteProduct('${product.public_id}')">🗑️ Delete</button>
+            `;
+            container.appendChild(div);
+            totalProducts++;
+          });
+        }
+
+        if (totalProducts > 0) {
+          document.getElementById('product-list').classList.remove('hidden');
+        }
+      } catch (err) {
+        console.error('Error loading products:', err);
+      }
+    }
+
+    async function deleteProduct(publicId) {
+      if (!confirm('Are you sure you want to delete this product?')) return;
+      try {
+        const res = await fetch(`/delete/${publicId}`, { method: 'DELETE' });
+        const result = await res.json();
+        alert(result.message || 'Product deleted');
+        fetchProducts();
+      } catch (err) {
+        alert('❌ Error deleting product.');
+      }
+    }
+  </script>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ChiCasual Admin Panel</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 40px;
+      max-width: 600px;
+      margin: auto;
+    }
+
+    h2 {
+      color: #001f3f;
+      margin-bottom: 20px;
+    }
+
+    input, select, button {
+      margin-bottom: 15px;
+      padding: 10px;
+      font-size: 16px;
+      width: 100%;
+    }
+
+    button {
+      background-color: #001f3f;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background-color: #aaa;
+      cursor: not-allowed;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .message {
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .success {
+      background-color: #e6ffe6;
+      border: 1px solid #8bc34a;
+    }
+
+    .error {
+      background-color: #ffe6e6;
+      border: 1px solid #f44336;
+    }
+
+    .product-list {
+      margin-top: 30px;
+    }
+
+    .product-item {
+      background: #fff;
+      padding: 10px;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+    }
+
+    .product-item img {
+      width: 100%;
+      max-height: 200px;
+      object-fit: contain;
+      margin-bottom: 10px;
+    }
+
+    h4 {
+      margin-top: 30px;
+      margin-bottom: 10px;
+      color: #001f3f;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Admin Product Upload</h2>
+
+  <!-- Login Section -->
+  <div id="login-section">
+    <input type="password" id="admin-password" placeholder="Enter admin password" required />
+    <button onclick="verifyPassword()">Login</button>
+    <div id="login-error" class="message error hidden">Incorrect password.</div>
+  </div>
+
+  <!-- Upload Form Section -->
+  <form id="upload-form" class="hidden" enctype="multipart/form-data">
+    <input type="text" name="productName" placeholder="Product Name" required />
+    <input type="number" name="productPrice" placeholder="Price (₦)" required />
+    
+    <select name="productCategory" required>
+      <option value="">Select Category</option>
+      <option value="shoe">Shoe</option>
+      <option value="senators">Senators</option>
+      <option value="caps">Caps</option>
+      <option value="shirts">Shirts</option>
+      <option value="shorts">Shorts</option>
+      <option value="trousers">Trousers</option>
+    </select>
+
+    <input type="number" name="productDiscount" placeholder="Discount (%)" />
+    <input type="file" name="image" accept="image/*" required />
+    <input type="hidden" name="adminPassword" id="hidden-password" />
+    <button type="submit" id="upload-btn">Upload Product</button>
+    <div id="upload-message" class="message hidden"></div>
+  </form>
+
+  <div class="product-list hidden" id="product-list">
+    <h3>Uploaded Products</h3>
+    <div id="products-container"></div>
+  </div>
+
+  <script>
+    const correctPassword = 'thisisjustthebeginning';
+
+    function verifyPassword() {
+      const input = document.getElementById('admin-password').value;
+      const error = document.getElementById('login-error');
+      if (input === correctPassword) {
+        document.getElementById('login-section').classList.add('hidden');
+        document.getElementById('upload-form').classList.remove('hidden');
+        document.getElementById('hidden-password').value = input;
+        fetchProducts();
+      } else {
+        error.classList.remove('hidden');
+      }
+    }
+
+    document.getElementById('upload-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+      const messageBox = document.getElementById('upload-message');
+      const uploadBtn = document.getElementById('upload-btn');
+
+      uploadBtn.disabled = true;
+      uploadBtn.textContent = 'Uploading...';
+
+      try {
+        const res = await fetch('/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+          messageBox.textContent = '✅ Product uploaded successfully!';
+          messageBox.className = 'message success';
+          form.reset();
+          fetchProducts();
+        } else {
+          messageBox.textContent = result.error || '❌ Upload failed.';
+          messageBox.className = 'message error';
+        }
+      } catch (err) {
+        messageBox.textContent = '❌ Server error while uploading.';
+        messageBox.className = 'message error';
+      }
+
+      messageBox.classList.remove('hidden');
+      uploadBtn.disabled = false;
+      uploadBtn.textContent = 'Upload Product';
+    });
+
+    async function fetchProducts() {
+      try {
+        const res = await fetch('/products');
+        const data = await res.json();
+        const container = document.getElementById('products-container');
+        container.innerHTML = '';
+
+        const grouped = data.grouped || {};
+        let totalProducts = 0;
+
+        for (const category in grouped) {
+          const products = grouped[category];
+          if (!products.length) continue;
+
+          const categoryTitle = document.createElement('h4');
+          categoryTitle.textContent = category.toUpperCase();
+          container.appendChild(categoryTitle);
+
+          products.forEach(product => {
+            const div = document.createElement('div');
+            div.className = 'product-item';
+            div.innerHTML = `
+              <img src="${product.url}" alt="${product.name}" />
+              <strong>${product.name}</strong><br>
+              ₦${product.price} (${product.discount}% off)<br>
+              Category: ${product.category}<br>
+              <button onclick="deleteProduct('${product.public_id}')">🗑️ Delete</button>
+            `;
+            container.appendChild(div);
+            totalProducts++;
+          });
+        }
+
+        if (totalProducts > 0) {
+          document.getElementById('product-list').classList.remove('hidden');
+        }
       } catch (err) {
         console.error('Error loading products:', err);
       }
