@@ -8,24 +8,24 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Debug: Confirm that environment variables are loaded
+// === Debug: Confirm environment variables ===
 console.log('CLOUDINARY_CLOUD_NAME:', process.env.CLOUDINARY_CLOUD_NAME);
 console.log('CLOUDINARY_API_KEY:', process.env.CLOUDINARY_API_KEY);
 console.log('CLOUDINARY_API_SECRET:', process.env.CLOUDINARY_API_SECRET);
 
-// === Static & Parsing Middleware ===
+// === Middleware ===
 app.use(express.static(path.join(__dirname)));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// === Cloudinary Config Using Explicit Environment Variables ===
+// === Cloudinary Configuration ===
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// === Multer + Cloudinary Storage Setup ===
+// === Multer Storage Setup ===
 const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
@@ -44,7 +44,7 @@ const storage = new CloudinaryStorage({
 });
 const parser = multer({ storage });
 
-// === Product Upload Endpoint ===
+// === Upload Product Endpoint ===
 app.post('/upload', parser.single('image'), async (req, res) => {
   const { productName, productPrice, productDiscount, productCategory } = req.body;
   console.log('➡️ Upload request:', req.body);
@@ -127,6 +127,7 @@ app.delete('/delete/:public_id', async (req, res) => {
 
 // === Keep-Alive Ping Endpoint ===
 app.get('/ping', (req, res) => res.send('🏓 Pong'));
+
 setInterval(() => {
   fetch(process.env.SELF_URL)
     .then(r => r.text())
@@ -135,4 +136,6 @@ setInterval(() => {
 }, 14 * 60 * 1000);
 
 // === Start Server ===
-app.listen(PORT, () => console.log(`✅ Server running at http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  console.log(`✅ Server running at http://localhost:${PORT}`);
+});
