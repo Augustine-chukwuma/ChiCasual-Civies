@@ -221,82 +221,83 @@
       <span>Account</span>
     </a>
   </nav>
+<script>
+  let allProducts = [];
 
-  <script>
-    let allProducts = [];
-
-    async function fetchProducts() {
-      try {
-        const res = await fetch('/products');
-        const data = await res.json();
-        allProducts = data.products;
-        renderProductsByCategory(allProducts);
-      } catch (err) {
-        console.error('Error fetching products:', err);
-      }
+  async function fetchProducts() {
+    try {
+      const res = await fetch('/products');
+      const data = await res.json();
+      allProducts = data.products || [];
+      renderProductsByCategory(allProducts);
+    } catch (err) {
+      console.error('Error fetching products:', err);
     }
+  }
 
-    function renderProductsByCategory(products) {
-      const container = document.getElementById('categoriesContainer');
-      container.innerHTML = '';
+  function renderProductsByCategory(products) {
+    const container = document.getElementById('categoriesContainer');
+    container.innerHTML = '';
 
-      const categories = {};
-      products.forEach(product => {
-        const cat = (product.category || 'Others').toLowerCase();
-        if (!categories[cat]) categories[cat] = [];
-        categories[cat].push(product);
-      });
-
-      Object.keys(categories).forEach(cat => {
-        const section = document.createElement('div');
-        section.className = 'category';
-        section.innerHTML = `<h2>${capitalize(cat)}</h2><div class="product-grid"></div>`;
-
-        categories[cat].forEach(product => {
-          const discountPrice = (parseFloat(product.price) * (1 - (parseFloat(product.discount || 0) / 100))).toFixed(2);
-          const imageUrl = product.url || (product.image ? URL.createObjectURL(product.image) : '');
-
-          const card = document.createElement('div');
-          card.className = 'product';
-          card.innerHTML = `
-            <img src="${imageUrl}" alt="${product.name}" />
-            <div class="product-details">
-              <h4>${product.name}</h4>
-              <div>
-                <span class="price">₦${discountPrice}</span>
-                ${product.discount ? `<span class="discount">₦${product.price}</span>` : ''}
-              </div>
-            </div>
-          `;
-          section.querySelector('.product-grid').appendChild(card);
-        });
-
-        container.appendChild(section);
-      });
-    }
-
-    function capitalize(str) {
-      return str.charAt(0).toUpperCase() + str.slice(1);
-    }
-
-    function filterProducts() {
-      const query = document.getElementById('searchInput').value.toLowerCase();
-      const filtered = allProducts.filter(p => p.name.toLowerCase().includes(query));
-      renderProductsByCategory(filtered);
-    }
-
-    function updateCartBadge(count) {
-      const badge = document.getElementById('cartBadge');
-      badge.textContent = count;
-      badge.style.display = count > 0 ? 'inline-block' : 'none';
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      const cartCount = localStorage.getItem("cartCount") || 0;
-      updateCartBadge(cartCount);
+    const categories = {};
+    products.forEach(product => {
+      const cat = (product.category || 'Others').toLowerCase();
+      if (!categories[cat]) categories[cat] = [];
+      categories[cat].push(product);
     });
 
+    Object.keys(categories).forEach(cat => {
+      const section = document.createElement('div');
+      section.className = 'category';
+      section.innerHTML = `<h2>${capitalize(cat)}</h2><div class="product-grid"></div>`;
+
+      categories[cat].forEach(product => {
+        const price = parseFloat(product.price || 0);
+        const discount = parseFloat(product.discount || 0);
+        const discountedPrice = (price * (1 - discount / 100)).toFixed(2);
+        const imageUrl = product.imageUrl || product.image || 'https://via.placeholder.com/200x200?text=No+Image';
+
+        const card = document.createElement('div');
+        card.className = 'product';
+        card.innerHTML = `
+          <img src="${imageUrl}" alt="${product.name || 'Product'}" />
+          <div class="product-details">
+            <h4>${product.name || 'Unnamed Product'}</h4>
+            <div>
+              <span class="price">₦${discountedPrice}</span>
+              ${discount ? `<span class="discount">₦${price.toFixed(2)}</span>` : ''}
+            </div>
+          </div>
+        `;
+        section.querySelector('.product-grid').appendChild(card);
+      });
+
+      container.appendChild(section);
+    });
+  }
+
+  function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  function filterProducts() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    const filtered = allProducts.filter(p => p.name && p.name.toLowerCase().includes(query));
+    renderProductsByCategory(filtered);
+  }
+
+  function updateCartBadge(count) {
+    const badge = document.getElementById('cartBadge');
+    badge.textContent = count;
+    badge.style.display = count > 0 ? 'inline-block' : 'none';
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const cartCount = localStorage.getItem("cartCount") || 0;
+    updateCartBadge(cartCount);
     fetchProducts();
-  </script>
+  });
+</script>
+
 </body>
 </html>
