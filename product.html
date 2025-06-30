@@ -226,7 +226,7 @@
 
   async function fetchProducts() {
     try {
-      const res = await fetch('/products');
+      const res = await fetch('/productx');
       const data = await res.json();
       allProducts = data.products || [];
       renderProductsByCategory(allProducts);
