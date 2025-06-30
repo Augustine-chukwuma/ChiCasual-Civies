@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const AdmZip = require('adm-zip');
+const path = require('path');
 const { v2: cloudinary } = require('cloudinary');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const fetch = require('node-fetch');
@@ -12,7 +13,12 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
+// Fallback: send index.html for unmatched routes (for SPA routing)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 // === Cloudinary Configuration ===
 cloudinary.config({
   cloud_name: 'dn71wkf7j',
