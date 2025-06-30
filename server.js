@@ -15,10 +15,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
-// Fallback: send index.html for unmatched routes (for SPA routing)
+/* Fallback: send index.html for unmatched routes (for SPA routing)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname,'index.html'));
-});
+}); */
+
+
 // === Cloudinary Configuration ===
 cloudinary.config({
   cloud_name: 'dn71wkf7j',
