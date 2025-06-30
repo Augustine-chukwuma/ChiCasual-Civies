@@ -80,6 +80,15 @@ app.get('/productx', async (req, res) => {
   }
 });
 
+
+try{
+xxyyzzrr.post();
+} catch (err){
+  console.log('error at line 85',err);
+}
+
+
+
 // === Delete ZIP Product File by public_id ===
 app.delete('/products/:public_id', async (req, res) => {
   const { public_id } = req.params;
