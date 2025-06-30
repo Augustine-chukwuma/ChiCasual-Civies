@@ -240,12 +240,15 @@
     container.innerHTML = '';
 
     const categories = {};
+
+    // Group products by category
     products.forEach(product => {
-      const cat = (product.category || 'Others').toLowerCase();
-      if (!categories[cat]) categories[cat] = [];
-      categories[cat].push(product);
+      const category = (product.category || 'Others').toLowerCase();
+      if (!categories[category]) categories[category] = [];
+      categories[category].push(product);
     });
 
+    // Render each category
     Object.keys(categories).forEach(cat => {
       const section = document.createElement('div');
       section.className = 'category';
@@ -255,7 +258,7 @@
         const price = parseFloat(product.price || 0);
         const discount = parseFloat(product.discount || 0);
         const discountedPrice = (price * (1 - discount / 100)).toFixed(2);
-        const imageUrl = product.imageUrl || product.image || 'https://via.placeholder.com/200x200?text=No+Image';
+        const imageUrl = product.imageUrl || 'https://via.placeholder.com/200x200?text=No+Image';
 
         const card = document.createElement('div');
         card.className = 'product';
@@ -293,7 +296,7 @@
   }
 
   document.addEventListener("DOMContentLoaded", () => {
-    const cartCount = localStorage.getItem("cartCount") || 0;
+    const cartCount = parseInt(localStorage.getItem("cartCount")) || 0;
     updateCartBadge(cartCount);
     fetchProducts();
   });
