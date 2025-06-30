@@ -1,173 +1,107 @@
 const express = require('express');
+const cors = require('cors');
 const multer = require('multer');
+const AdmZip = require('adm-zip');
 const { v2: cloudinary } = require('cloudinary');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const path = require('path');
+const fetch = require('node-fetch');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// === Middleware ===
-app.use(express.static(path.join(__dirname)));
-app.use(express.urlencoded({ extended: true }));
+app.use(cors());
 app.use(express.json());
 
-// === Cloudinary Config ===
+// === Cloudinary Configuration ===
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: 'dn71wkf7j',
+  api_key: '297328628727681',
+  api_secret: 'oqn56WmLwfOT7FK4RU1cX5nBvcA'
 });
 
-// === Storage Setup with Custom Metadata ===
 const storage = new CloudinaryStorage({
   cloudinary,
-  params: async (req, file) => {
-    const { productName, productPrice, productDiscount, productCategory } = req.body;
-    return {
-      folder: 'products',
-      context: {
-        'custom.name': productName,
-        'custom.price': productPrice,
-        'custom.discount': productDiscount,
-        'custom.category': productCategory,
-      },
-      allowed_formats: ['jpg', 'jpeg', 'png'],
-    };
-  },
-});
-const parser = multer({ storage });
-
-// === Upload Product Endpoint ===
-app.post('/upload', parser.single('image'), async (req, res) => {
-  const { productName, productPrice, productDiscount, productCategory } = req.body;
-  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-
-  try {
-    const publicId = req.file.filename || req.file.public_id;
-    res.status(200).json({
-      message: '✅ Upload successful',
-      imageUrl: req.file.path,
-      public_id: publicId,
-      name: productName,
-      price: productPrice,
-      discount: productDiscount,
-      category: productCategory,
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Upload failed', details: error.message });
+  params: {
+    folder: 'products',
+    resource_type: 'raw',
+    format: async () => 'zip',
+    public_id: () => `product_${Date.now()}`
   }
 });
 
-// === Fetch All Products Grouped by Category ===
+const upload = multer({ storage });
+
+// === Upload Product as .zip (includes metadata.json + image) ===
+app.post('/products', upload.single('file'), async (req, res) => {
+  try {
+    const fileData = req.file;
+    if (!fileData || !fileData.originalname.endsWith('.zip')) {
+      return res.status(400).json({ error: 'Only ZIP files allowed with metadata and image.' });
+    }
+    res.json({ message: 'Product ZIP uploaded successfully', file: fileData });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Upload failed', details: err });
+  }
+});
+
+// === Fetch All Products by Extracting .zip files ===
 app.get('/products', async (req, res) => {
   try {
-    const result = await cloudinary.search
-      .expression('folder:products')
-      .sort_by('created_at', 'desc')
-      .with_field('context')
+    const { resources } = await cloudinary.search
+      .expression('folder:products AND resource_type:raw AND format:zip')
+      .sort_by('public_id', 'desc')
       .max_results(100)
       .execute();
 
-    const grouped = {};
-    result.resources.forEach((item) => {
-      const ctx = item.context?.custom || {};
-      const product = {
-        url: item.secure_url,
-        name: ctx.name || 'Unnamed',
-        price: ctx.price || '0',
-        discount: ctx.discount || '0',
-        category: ctx.category || 'uncategorized',
-        public_id: item.public_id,
-      };
-      const categoryKey = product.category.toLowerCase();
-      if (!grouped[categoryKey]) grouped[categoryKey] = [];
-      grouped[categoryKey].push(product);
-    });
+    const products = await Promise.all(resources.map(async resource => {
+      const response = await fetch(resource.secure_url);
+      const buffer = await response.buffer();
+      const zip = new AdmZip(buffer);
+      const jsonEntry = zip.getEntry('metadata.json');
+      if (!jsonEntry) return null;
+      const metadata = JSON.parse(jsonEntry.getData().toString('utf8'));
+      return metadata;
+    }));
 
-    res.json({ grouped });
+    res.json({ products: products.filter(Boolean) });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch products', details: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch products', details: err });
   }
 });
 
-// === Fetch Products by Category ===
-app.get('/products/category', async (req, res) => {
-  const category = req.query.name?.toLowerCase();
-  if (!category) return res.status(400).json({ error: 'Category name is required' });
-
-  try {
-    const result = await cloudinary.search
-      .expression(`folder:products AND context.custom.category=${category}`)
-      .sort_by('created_at', 'desc')
-      .with_field('context')
-      .max_results(100)
-      .execute();
-
-    const products = result.resources.map((item) => {
-      const ctx = item.context?.custom || {};
-      return {
-        url: item.secure_url,
-        name: ctx.name || 'Unnamed',
-        price: ctx.price || '0',
-        discount: ctx.discount || '0',
-        category: ctx.category || 'uncategorized',
-        public_id: item.public_id,
-      };
-    });
-
-    res.json({ category, products });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch category', details: err.message });
-  }
-});
-
-// === Edit/Rename Product Metadata ===
-app.put('/edit/:public_id', async (req, res) => {
+// === Delete ZIP Product File by public_id ===
+app.delete('/products/:public_id', async (req, res) => {
   const { public_id } = req.params;
-  const { name, price, discount, category } = req.body;
-
   try {
-    const result = await cloudinary.uploader.update_metadata({
-      name,
-      price,
-      discount,
-      category,
-    }, public_id);
-
-    res.json({ message: '✅ Metadata updated', result });
+    await cloudinary.uploader.destroy(public_id, { resource_type: 'raw' });
+    res.json({ message: `Product ${public_id} deleted.` });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to update product', details: err.message });
+    res.status(500).json({ error: 'Failed to delete product', details: err });
   }
 });
 
-// === Delete Product ===
-app.delete('/delete/:public_id', async (req, res) => {
+// === Update Product ZIP by Replacing the Old One ===
+app.put('/products/:public_id', upload.single('file'), async (req, res) => {
   const { public_id } = req.params;
 
   try {
-    const result = await cloudinary.uploader.destroy(public_id);
-    if (result.result === 'ok') {
-      res.json({ message: '✅ Product deleted successfully' });
-    } else {
-      res.status(404).json({ error: 'Product not found or already deleted' });
+    const fileData = req.file;
+    if (!fileData || !fileData.originalname.endsWith('.zip')) {
+      return res.status(400).json({ error: 'Only ZIP files allowed for update.' });
     }
+
+    await cloudinary.uploader.destroy(public_id, { resource_type: 'raw' });
+
+    res.json({ message: 'Product updated successfully', file: fileData });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to delete product', details: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update product', details: err });
   }
 });
 
-// === Ping for Keepalive ===
-app.get('/ping', (req, res) => res.send('🏓 Pong'));
-setInterval(() => {
-  fetch(process.env.SELF_URL)
-    .then(r => r.text())
-    .then(d => console.log(`🔁 Pinged: ${d}`))
-    .catch(err => console.error('⚠️ Ping error:', err));
-}, 14 * 60 * 1000);
-
-// === Start Server ===
 app.listen(PORT, () => {
-  console.log(`✅ Server running at http://localhost:${PORT}`);
+  console.log(`ChiCasual-Civies API running at http://localhost:${PORT}`);
 });
