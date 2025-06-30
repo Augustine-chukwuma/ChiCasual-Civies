@@ -17,7 +17,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Fallback: send index.html for unmatched routes (for SPA routing)
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname,'index.html'));
 });
 // === Cloudinary Configuration ===
 cloudinary.config({
