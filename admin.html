@@ -12,6 +12,23 @@
       max-width: 600px;
       margin: auto;
     }
+.product-list {
+  margin-top: 30px;
+}
+
+.product-item {
+  background: #fff;
+  padding: 10px;
+  border: 1px solid #ccc;
+  margin-bottom: 10px;
+}
+
+.product-item img {
+  width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  margin-bottom: 10px;
+}
 
     h2 {
       color: #001f3f;
@@ -109,10 +126,15 @@
     <div id="upload-message" class="message hidden"></div>
   </form>
 
-  <div class="product-list hidden" id="product-list">
-    <h3>Uploaded Products</h3>
-    <div id="products-container"></div>
+  <!-- Product List Section -->
+<div class="product-list hidden" id="product-list">
+  <h3>Uploaded Products</h3>
+  <div id="products-container">
+    <!-- Product items will be dynamically inserted here -->
   </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script>
   const correctPassword = 'thisisjustthebeginning';
 
@@ -122,6 +144,7 @@
     if (input === correctPassword) {
       document.getElementById('login-section').classList.add('hidden');
       document.getElementById('upload-form').classList.remove('hidden');
+      document.getElementById('product-list').classList.remove('hidden');
       document.getElementById('hidden-password').value = input;
       fetchProducts();
     } else {
@@ -134,7 +157,6 @@
     const form = e.target;
     const formData = new FormData();
 
-    // Construct a new ZIP client-side
     const name = form.productName.value;
     const price = form.productPrice.value;
     const category = form.productCategory.value;
@@ -148,7 +170,7 @@
       price,
       category,
       discount,
-      imageUrl: '', // You must manually prefill this in metadata.zip before upload or automate server-side
+      imageUrl: '', // placeholder
     };
 
     const zip = new JSZip();
