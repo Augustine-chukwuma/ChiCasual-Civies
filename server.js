@@ -43,7 +43,7 @@ app.post('/products', upload.single('file'), async (req, res) => {
     }
     res.json({ message: 'Product ZIP uploaded successfully', file: fileData });
   } catch (err) {
-    console.error('❌ Upload error at /products:', err);
+    console.error('❌ Upload error:', err);
     res.status(500).json({ error: 'Upload failed', details: err.message });
   }
 });
@@ -60,21 +60,39 @@ app.get('/productx', async (req, res) => {
     const products = await Promise.all(resources.map(async (resource) => {
       try {
         const response = await fetch(resource.secure_url);
+
+        if (!response.ok) {
+          console.warn(`⚠️ Failed to fetch ${resource.secure_url} — status: ${response.status}`);
+          return null;
+        }
+
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/zip')) {
+          console.warn(`⚠️ Invalid content-type for ${resource.public_id}: ${contentType}`);
+          return null;
+        }
+
         const buffer = await response.buffer();
 
-        const zip = new AdmZip(buffer);
-        const jsonEntry = zip.getEntry('metadata.json');
+        let zip;
+        try {
+          zip = new AdmZip(buffer);
+        } catch (zipErr) {
+          console.error(`❌ Invalid ZIP format for ${resource.public_id}:`, zipErr.message);
+          return null;
+        }
 
+        const jsonEntry = zip.getEntry('metadata.json');
         if (!jsonEntry) {
-          console.warn(`⚠️ metadata.json not found in zip: ${resource.public_id}`);
+          console.warn(`⚠️ metadata.json not found in ZIP: ${resource.public_id}`);
           return null;
         }
 
         const metadata = JSON.parse(jsonEntry.getData().toString('utf8'));
-        metadata.public_id = resource.public_id; // For referencing in delete
+        metadata.public_id = resource.public_id;
         return metadata;
-      } catch (zipErr) {
-        console.error(`❌ Error processing ZIP from ${resource.public_id}:`, zipErr.message);
+      } catch (err) {
+        console.error(`❌ Exception while processing ${resource.public_id}:`, err.message);
         return null;
       }
     }));
