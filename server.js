@@ -15,12 +15,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
-/* Fallback: send index.html for unmatched routes (for SPA routing)
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname,'index.html'));
-}); */
-
-
 // === Cloudinary Configuration ===
 cloudinary.config({
   cloud_name: 'dn71wkf7j',
@@ -49,8 +43,8 @@ app.post('/products', upload.single('file'), async (req, res) => {
     }
     res.json({ message: 'Product ZIP uploaded successfully', file: fileData });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Upload failed', details: err });
+    console.error('❌ Upload error at /products:', err);
+    res.status(500).json({ error: 'Upload failed', details: err.message });
   }
 });
 
@@ -63,31 +57,38 @@ app.get('/productx', async (req, res) => {
       .max_results(100)
       .execute();
 
-    const products = await Promise.all(resources.map(async resource => {
-      const response = await fetch(resource.secure_url);
-      const buffer = await response.buffer();
-      const zip = new AdmZip(buffer);
-      const jsonEntry = zip.getEntry('metadata.json');
-      if (!jsonEntry) return null;
-      const metadata = JSON.parse(jsonEntry.getData().toString('utf8'));
-      return metadata;
+    const products = await Promise.all(resources.map(async (resource) => {
+      try {
+        const response = await fetch(resource.secure_url);
+        const buffer = await response.buffer();
+
+        const zip = new AdmZip(buffer);
+        const jsonEntry = zip.getEntry('metadata.json');
+
+        if (!jsonEntry) {
+          console.warn(`⚠️ metadata.json not found in zip: ${resource.public_id}`);
+          return null;
+        }
+
+        const metadata = JSON.parse(jsonEntry.getData().toString('utf8'));
+        metadata.public_id = resource.public_id; // For referencing in delete
+        return metadata;
+      } catch (zipErr) {
+        console.error(`❌ Error processing ZIP from ${resource.public_id}:`, zipErr.message);
+        return null;
+      }
     }));
 
     res.json({ products: products.filter(Boolean) });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to fetch products', details: err });
+    console.error('🔥 Error in GET /productx:', err);
+    res.status(500).json({
+      error: 'Failed to fetch products',
+      message: err.message || 'Unknown error occurred while fetching products',
+      stack: err.stack || 'No stack trace available'
+    });
   }
 });
-
-
-try{
-xxyyzzrr.post();
-} catch (err){
-  console.log('error at line 85',err);
-}
-
-
 
 // === Delete ZIP Product File by public_id ===
 app.delete('/products/:public_id', async (req, res) => {
@@ -96,7 +97,8 @@ app.delete('/products/:public_id', async (req, res) => {
     await cloudinary.uploader.destroy(public_id, { resource_type: 'raw' });
     res.json({ message: `Product ${public_id} deleted.` });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to delete product', details: err });
+    console.error(`❌ Delete error for ${public_id}:`, err);
+    res.status(500).json({ error: 'Failed to delete product', details: err.message });
   }
 });
 
@@ -114,11 +116,11 @@ app.put('/products/:public_id', upload.single('file'), async (req, res) => {
 
     res.json({ message: 'Product updated successfully', file: fileData });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to update product', details: err });
+    console.error(`❌ Update error for ${public_id}:`, err);
+    res.status(500).json({ error: 'Failed to update product', details: err.message });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`ChiCasual-Civies API running at http://localhost:${PORT}`);
+  console.log(`🚀 ChiCasual-Civies API running at http://localhost:${PORT}`);
 });
