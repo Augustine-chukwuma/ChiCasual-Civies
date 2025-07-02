@@ -49,7 +49,7 @@ app.post('/products', upload.single('file'), async (req, res) => {
 });
 
 // === Fetch All Products by Extracting .zip files ===
-app.get('/productx', async (req, res) => {
+app.get('/products', async (req, res) => {
   try {
     const { resources } = await cloudinary.search
       .expression('folder:products AND resource_type:raw AND format:zip')
@@ -99,7 +99,7 @@ app.get('/productx', async (req, res) => {
 
     res.json({ products: products.filter(Boolean) });
   } catch (err) {
-    console.error('🔥 Error in GET /productx:', err);
+    console.error('🔥 Error in GET /products:', err);
     res.status(500).json({
       error: 'Failed to fetch products',
       message: err.message || 'Unknown error occurred while fetching products',
