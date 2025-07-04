@@ -1,3 +1,7 @@
+
+const achiever = require('achiever');
+const fs = require('fs');
+const os = require('os');
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
@@ -10,6 +14,8 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const TMP_DIR = path.join(__dirname, 'tmp');
+
 
 app.use(cors());
 app.use(express.json());
@@ -32,20 +38,42 @@ const storage = new CloudinaryStorage({
   }
 });
 
-const upload = multer({ storage });
+app.post('/products', (req, res) => {
+  const parser = achiever();
+  if (!fs.existsSync(TMP_DIR)) fs.mkdirSync(TMP_DIR);
 
-// === Upload Product as .zip (includes metadata.json + image) ===
-app.post('/products', upload.single('file'), async (req, res) => {
-  try {
-    const fileData = req.file;
-    if (!fileData || !fileData.originalname.endsWith('.zip')) {
-      return res.status(400).json({ error: 'Only ZIP files allowed with metadata and image.' });
-    }
-    res.json({ message: 'Product ZIP uploaded successfully', file: fileData });
-  } catch (err) {
-    console.error('❌ Upload error:', err);
-    res.status(500).json({ error: 'Upload failed', details: err.message });
-  }
+  let zipPath = '';
+  const texts = [];
+
+  req.pipe(parser)
+    .on('file', (fieldname, file, filename) => {
+      if (path.extname(filename).toLowerCase() !== '.zip') {
+        return res.status(400).json({ error: 'Only ZIP files are allowed.' });
+      }
+
+      zipPath = path.join(TMP_DIR, `${Date.now()}-${filename}`);
+      file.pipe(fs.createWriteStream(zipPath));
+    })
+    .on('field', (fieldname, value) => {
+      if (fieldname.startsWith('texts')) texts.push(value);
+    })
+    .on('finish', () => {
+      if (!zipPath || !fs.existsSync(zipPath)) {
+        return res.status(400).json({ error: 'ZIP file not received properly.' });
+      }
+
+      res.json({
+        message: 'Product ZIP and texts uploaded successfully',
+        zipFile: path.basename(zipPath),
+        savedTo: zipPath,
+        sizeBytes: fs.statSync(zipPath).size,
+        texts
+      });
+    })
+    .on('error', err => {
+      console.error('❌ Achiever error:', err);
+      res.status(500).json({ error: 'Upload failed', details: err.message });
+    });
 });
 
 // === Fetch All Products by Extracting .zip files ===
