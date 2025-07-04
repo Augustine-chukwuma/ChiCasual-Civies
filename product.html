@@ -211,7 +211,7 @@
   100% {
     transform: scale(1) rotate(720deg);
     opacity: 1;
-    background-color: #4CAF50;
+    background-color:#FF5349;
   }
 }
 
@@ -416,7 +416,9 @@ function filterByCategory(category) {
   const filtered = allProducts.filter(p => (p.category || 'Others').toLowerCase() === category.toLowerCase());
   renderProductsByCategory(filtered);
 }
-
+function purchase(product= 'invalid' , dp =0){
+  alert('Added to cart: ', await(await fetch('api/purchase')).json());
+}
 </script>
 
 
