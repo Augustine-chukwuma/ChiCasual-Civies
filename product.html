@@ -226,12 +226,13 @@
 
   async function fetchProducts() {
     try {
-      const res = await fetch('/productx');
+      const res = await fetch('/api/products');
       const data = await res.json();
-      allProducts = data.products || [];
+      allProducts = data.products || data || [];
       renderProductsByCategory(allProducts);
     } catch (err) {
       console.error('Error fetching products:', err);
+      document.getElementById('categoriesContainer').innerHTML = '<p>Failed to load products.</p>';
     }
   }
 
@@ -239,16 +240,19 @@
     const container = document.getElementById('categoriesContainer');
     container.innerHTML = '';
 
+    if (!products.length) {
+      container.innerHTML = '<p>No products available.</p>';
+      return;
+    }
+
     const categories = {};
 
-    // Group products by category
     products.forEach(product => {
       const category = (product.category || 'Others').toLowerCase();
       if (!categories[category]) categories[category] = [];
       categories[category].push(product);
     });
 
-    // Render each category
     Object.keys(categories).forEach(cat => {
       const section = document.createElement('div');
       section.className = 'category';
@@ -263,7 +267,7 @@
         const card = document.createElement('div');
         card.className = 'product';
         card.innerHTML = `
-          <img src="${imageUrl}" alt="${product.name || 'Product'}" />
+          <img src="${imageUrl}" alt="${product.name || 'Product'}" onerror="this.src='https://via.placeholder.com/200x200?text=No+Image'" />
           <div class="product-details">
             <h4>${product.name || 'Unnamed Product'}</h4>
             <div>
@@ -301,6 +305,7 @@
     fetchProducts();
   });
 </script>
+
 
 </body>
 </html>
