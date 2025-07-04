@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(''));
+app.use(express.static('./'));
 
 // Cloudinary Configuration with env variables
 cloudinary.config({
