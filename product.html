@@ -416,9 +416,10 @@ function filterByCategory(category) {
   const filtered = allProducts.filter(p => (p.category || 'Others').toLowerCase() === category.toLowerCase());
   renderProductsByCategory(filtered);
 }
-function purchase(product= 'invalid' , dp =0){
+try{
+  async  function purchase(product= 'invalid' , dp =0){
   alert('Added to cart: ',JSON.stringify( await(await fetch('api/purchase')).json()));
-}
+}}
 </script>
 
 
