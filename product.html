@@ -180,7 +180,61 @@
   font-size: 14px;
   border-radius: 5px;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: all 0.3s ease;
+  float: right;
+  position: relative;
+  transform-origin: center;
+  
+  /* Animation plays automatically on page load */
+  animation: crazyLoad 1.5s ease-out forwards;
+}
+
+/* Crazy page load animation */
+@keyframes crazyLoad {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 0;
+    background-color: #ff00ff;
+  }
+  25% {
+    transform: scale(1.5) rotate(180deg);
+    background-color: #00ffff;
+  }
+  50% {
+    transform: scale(0.7) rotate(360deg);
+    background-color: #ffff00;
+  }
+  75% {
+    transform: scale(1.2) rotate(540deg);
+    background-color: #ff0000;
+  }
+  100% {
+    transform: scale(1) rotate(720deg);
+    opacity: 1;
+    background-color: #4CAF50;
+  }
+}
+
+/* Click animation */
+@keyframes crazyClick {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.5) rotate(10deg); }
+  50% { transform: scale(0.8) rotate(-10deg); }
+  75% { transform: scale(1.3) rotate(5deg); }
+  100% { transform: scale(1); }
+}
+
+/* Apply click animation */
+.purchase-btn:active {
+  animation: crazyClick 0.4s ease;
+  background-color: #45a049;
+}
+
+/* Hover effect */
+.purchase-btn:hover {
+  background-color: #45a049;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 .purchase-btn:hover {
   background-color: #45a049;
@@ -218,7 +272,7 @@
   <a href="admin.html" class="admin-link"><i class="fas fa-user-shield"></i> Admin Panel</a>
 
   <nav class="bottom-app-bar">
-    <a href="index.html" class="nav-item">
+    <a href="product.html" class="nav-item">
       <i class="fas fa-home"></i>
       <span>Home</span>
     </a>
@@ -298,7 +352,7 @@
         ${discount ? `<span class="discount">₦${price.toFixed(2)}</span>` : ''}
       </div>
       <button class="purchase-btn" onclick="purchase('${product.name}', ${discountedPrice})">
-        🛒 Buy Now
+        🛒 Add To Cart
       </button>
     </div>
   </div>
