@@ -77,66 +77,44 @@ app.post('/products', (req, res) => {
 });
 
 // === Fetch All Products by Extracting .zip files ===
-app.get('/products', async (req, res) => {
+app.get('/products', (req, res) => {
   try {
-    const { resources } = await cloudinary.search
-      .expression('folder:products AND resource_type:raw AND format:zip')
-      .sort_by('public_id', 'desc')
-      .max_results(100)
-      .execute();
+    // Check if temporary directory exists
+    if (!fs.existsSync(TMP_DIR)) {
+      return res.status(404).json({ error: 'No products directory found' });
+    }
 
-    const products = await Promise.all(resources.map(async (resource) => {
-      try {
-        const response = await fetch(resource.secure_url);
+    // Read all files in the directory
+    const files = fs.readdirSync(TMP_DIR);
+    const productFiles = files.filter(file => file.endsWith('.zip'));
+    
+    if (productFiles.length === 0) {
+      return res.status(404).json({ message: 'No product files found' });
+    }
 
-        if (!response.ok) {
-          console.warn(`⚠️ Failed to fetch ${resource.secure_url} — status: ${response.status}`);
-          return null;
-        }
-
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/zip')) {
-          console.warn(`⚠️ Invalid content-type for ${resource.public_id}: ${contentType}`);
-          return null;
-        }
-
-        const buffer = await response.buffer();
-
-        let zip;
-        try {
-          zip = new AdmZip(buffer);
-        } catch (zipErr) {
-          console.error(`❌ Invalid ZIP format for ${resource.public_id}:`, zipErr.message);
-          return null;
-        }
-
-        const jsonEntry = zip.getEntry('metadata.json');
-        if (!jsonEntry) {
-          console.warn(`⚠️ metadata.json not found in ZIP: ${resource.public_id}`);
-          return null;
-        }
-
-        const metadata = JSON.parse(jsonEntry.getData().toString('utf8'));
-        metadata.public_id = resource.public_id;
-        return metadata;
-      } catch (err) {
-        console.error(`❌ Exception while processing ${resource.public_id}:`, err.message);
-        return null;
-      }
-    }));
-
-    res.json({ products: products.filter(Boolean) });
-  } catch (err) {
-    console.error('🔥 Error in GET /products:', err);
-    res.status(500).json({
-      error: 'Failed to fetch products',
-      message: err.message || 'Unknown error occurred while fetching products',
-      stack: err.stack || 'No stack trace available'
+    // Prepare response with all product files
+    const products = productFiles.map(file => {
+      const filePath = path.join(TMP_DIR, file);
+      return {
+        name: file,
+        path: filePath,
+        sizeBytes: fs.statSync(filePath).size,
+        downloadUrl: `/products/download/${encodeURIComponent(file)}`,
+        createdAt: fs.statSync(filePath).birthtime
+      };
     });
-  }
-});
 
-// === Delete ZIP Product File by public_id ===
+    res.json({
+      message: 'Products retrieved successfully',
+      count: products.length,
+      products
+    });
+
+  } catch (err) {
+    console.error('❌ Product retrieval error:', err);
+    res.status(500).json({ error: 'Failed to retrieve products', details: err.message });
+  }
+});// === Delete ZIP Product File by public_id ===
 app.delete('/products/:public_id', async (req, res) => {
   const { public_id } = req.params;
   try {
