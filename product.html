@@ -171,6 +171,21 @@
     color: #ffcc00;
   }
 
+    .purchase-btn {
+  margin-top: 10px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+.purchase-btn:hover {
+  background-color: #45a049;
+}
+
   .cart-badge {
     position: absolute;
     top: 2px;
@@ -261,21 +276,32 @@
       categories[cat].forEach(product => {
         const price = parseFloat(product.price || 0);
         const discount = parseFloat(product.discount || 0);
-        const discountedPrice = (price * (1 - discount / 100)).toFixed(2);
+        const discountedPrice = (price - discount).toFixed(2);
         const imageUrl = product.imageUrl || 'https://via.placeholder.com/200x200?text=No+Image';
 
         const card = document.createElement('div');
         card.className = 'product';
         card.innerHTML = `
-          <img src="${imageUrl}" alt="${product.name || 'Product'}" onerror="this.src='https://via.placeholder.com/200x200?text=No+Image'" />
-          <div class="product-details">
-            <h4>${product.name || 'Unnamed Product'}</h4>
-            <div>
-              <span class="price">₦${discountedPrice}</span>
-              ${discount ? `<span class="discount">₦${price.toFixed(2)}</span>` : ''}
-            </div>
-          </div>
-        `;
+  <div class="product-card">
+    <img 
+      src="${imageUrl}" 
+      alt="${product.name || 'Product'}" 
+      loading="lazy"
+      onerror="this.src='https://via.placeholder.com/200x200?text=No+Image'" 
+    />
+    <div class="product-details">
+      <h4>${product.name || 'Unnamed Product'}</h4>
+      <div>
+        <span class="price">₦${discountedPrice}</span>
+        ${discount ? `<span class="discount">₦${price.toFixed(2)}</span>` : ''}
+      </div>
+      <button class="purchase-btn" onclick="purchase('${product.name}', ${discountedPrice})">
+        🛒 Buy Now
+      </button>
+    </div>
+  </div>
+`;
+
         section.querySelector('.product-grid').appendChild(card);
       });
 
