@@ -417,7 +417,7 @@ function filterByCategory(category) {
   renderProductsByCategory(filtered);
 }
 function purchase(product= 'invalid' , dp =0){
-  alert('Added to cart: ', await(await fetch('api/purchase')).json());
+  alert('Added to cart: ',JSON.stringify( await(await fetch('api/purchase')).json()));
 }
 </script>
 
