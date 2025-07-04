@@ -419,7 +419,7 @@ function filterByCategory(category) {
 try{
   async  function purchase(product= 'invalid' , dp =0){
   alert('Added to cart: ',JSON.stringify( await(await fetch('api/purchase')).json()));
-}}
+}} catch(err){}
 </script>
 
 
