@@ -222,7 +222,7 @@
       <i class="fas fa-home"></i>
       <span>Home</span>
     </a>
-    <a href="#categoriesContainer" class="nav-item">
+    <a href="#categoriesContainer" onclick="onCategoryClick()" class="nav-item">
       <i class="fas fa-th-large"></i>
       <span>Categories</span>
     </a>
@@ -236,7 +236,9 @@
       <span>Account</span>
     </a>
   </nav>
-<script>
+
+  
+  <script>
   let allProducts = [];
 
   async function fetchProducts() {
@@ -330,6 +332,37 @@
     updateCartBadge(cartCount);
     fetchProducts();
   });
+
+  function onCategoryClick() {
+  const selectEl = document.getElementById('categorySelect');
+
+  if (selectEl.options.length <= 1) {
+    // First-time population
+    const uniqueCategories = Array.from(
+      new Set(allProducts.map(p => (p.category || 'Others').toLowerCase()))
+    );
+
+    uniqueCategories.forEach(category => {
+      const option = document.createElement('option');
+      option.value = category;
+      option.textContent = capitalize(category);
+      selectEl.appendChild(option);
+    });
+  }
+
+  // Show or toggle the dropdown
+  selectEl.style.display = selectEl.style.display === 'none' ? 'inline-block' : 'none';
+}
+
+function filterByCategory(category) {
+  if (!category) {
+    renderProductsByCategory(allProducts); // Show all
+    return;
+  }
+  const filtered = allProducts.filter(p => (p.category || 'Others').toLowerCase() === category.toLowerCase());
+  renderProductsByCategory(filtered);
+}
+
 </script>
 
 
