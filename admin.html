@@ -12,23 +12,23 @@
       max-width: 600px;
       margin: auto;
     }
-    .product-list {
-      margin-top: 30px;
-    }
+.product-list {
+  margin-top: 30px;
+}
 
-    .product-item {
-      background: #fff;
-      padding: 10px;
-      border: 1px solid #ccc;
-      margin-bottom: 10px;
-    }
+.product-item {
+  background: #fff;
+  padding: 10px;
+  border: 1px solid #ccc;
+  margin-bottom: 10px;
+}
 
-    .product-item img {
-      width: 100%;
-      max-height: 200px;
-      object-fit: contain;
-      margin-bottom: 10px;
-    }
+.product-item img {
+  width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  margin-bottom: 10px;
+}
 
     h2 {
       color: #001f3f;
@@ -73,15 +73,29 @@
       background-color: #ffe6e6;
       border: 1px solid #f44336;
     }
+
+    .product-list {
+      margin-top: 30px;
+    }
+
+    .product-item {
+      background: #fff;
+      padding: 10px;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+    }
+
+    .product-item img {
+      width: 100%;
+      max-height: 200px;
+      object-fit: contain;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
 
   <h2>Admin Product Upload</h2>
-
-  <!-- ✅ Search Section Added -->
-  <input type="text" id="searchInput" placeholder="Search products by name or category" />
-  <button onclick="searchProducts()">🔍 Search</button>
 
   <!-- Login Section -->
   <div id="login-section">
@@ -113,224 +127,196 @@
   </form>
 
   <!-- Product List Section -->
-  <div class="product-list hidden" id="product-list">
-    <h3>Uploaded Products</h3>
-    <div id="products-container">
-      <!-- Product items will be dynamically inserted here -->
-    </div>
+<div class="product-list hidden" id="product-list">
+  <h3>Uploaded Products</h3>
+  <div id="products-container">
+    <!-- Product items will be dynamically inserted here -->
   </div>
+</div>
+<script>
+  (function() {
+    // Password moved to server-side in real implementation
+    const correctPassword = 'thisisjustthebeginning'; // TEMPORARY - REMOVE IN PRODUCTION
 
-  <!-- 🔒 Original Script - Untouched -->
-  <script>
-    (function() {
-      const correctPassword = 'thisisjustthebeginning';
+    // DOM Elements
+    const loginSection = document.getElementById('login-section');
+    const uploadForm = document.getElementById('upload-form');
+    const productList = document.getElementById('product-list');
+    const productsContainer = document.getElementById('products-container');
+    const passwordInput = document.getElementById('admin-password');
+    const loginError = document.getElementById('login-error');
+    const uploadBtn = document.getElementById('upload-btn');
+    const messageBox = document.getElementById('upload-message');
 
-      const loginSection = document.getElementById('login-section');
-      const uploadForm = document.getElementById('upload-form');
-      const productList = document.getElementById('product-list');
-      const productsContainer = document.getElementById('products-container');
-      const passwordInput = document.getElementById('admin-password');
-      const loginError = document.getElementById('login-error');
-      const uploadBtn = document.getElementById('upload-btn');
-      const messageBox = document.getElementById('upload-message');
-
-      if (uploadForm) {
-        uploadForm.addEventListener('submit', handleFormSubmit);
-      }
-
-      window.verifyPassword = function() {
-        const input = passwordInput?.value;
-        if (!input || !loginError) return;
-
-        if (input === correctPassword) {
-          loginSection?.classList.add('hidden');
-          uploadForm?.classList.remove('hidden');
-          productList?.classList.remove('hidden');
-          fetchProducts();
-        } else {
-          loginError.classList.remove('hidden');
-        }
-      };
-
-      async function handleFormSubmit(e) {
-        e.preventDefault();
-        const form = e.target;
-        const formData = new FormData();
-
-        const name = form.productName.value.trim();
-        const price = form.productPrice.value;
-        const category = form.productCategory.value.trim();
-        const discount = form.productDiscount.value || 0;
-        const imageFile = form.image.files[0];
-
-        if (!name || !price || !category) {
-          showMessage('❌ Please fill all required fields', 'error');
-          return;
-        }
-
-        if (isNaN(parseFloat(price)) || isNaN(parseFloat(discount))) {
-          showMessage('❌ Price and discount must be numbers', 'error');
-          return;
-        }
-
-        if (!imageFile) {
-          showMessage('❌ Product image is required', 'error');
-          return;
-        }
-
-        const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
-        if (!validTypes.includes(imageFile.type)) {
-          showMessage('❌ Only JPG, PNG or WebP images allowed', 'error');
-          return;
-        }
-
-        formData.append('name', name);
-        formData.append('price', parseFloat(price));
-        formData.append('category', category);
-        formData.append('discount', parseFloat(discount));
-        formData.append('image', imageFile);
-
-        setUploadButtonState(true);
-
-        try {
-          const res = await fetch('/api/products', {
-            method: 'POST',
-            body: formData
-          });
-
-          if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(errorData.error || 'Upload failed');
-          }
-
-          const result = await res.json();
-          showMessage('✅ Product uploaded successfully!', 'success');
-          form.reset();
-          fetchProducts();
-        } catch (err) {
-          showMessage(`❌ ${err.message || 'Server error while uploading'}`, 'error');
-        } finally {
-          setUploadButtonState(false);
-        }
-      }
-
-      async function fetchProducts() {
-        if (!productsContainer) return;
-
-        try {
-          productsContainer.innerHTML = '<div class="loading">Loading products...</div>';
-          const res = await fetch('/api/products');
-          if (!res.ok) throw new Error('Failed to fetch products');
-          const data = await res.json();
-          const products = Array.isArray(data) ? data : data.products || [];
-          renderProducts(products);
-        } catch (err) {
-          productsContainer.innerHTML = '<div class="error">Error loading products. Please try again.</div>';
-          console.error('Error loading products:', err);
-        }
-      }
-
-      function renderProducts(products) {
-        if (!productsContainer || !productList) return;
-
-        if (products.length === 0) {
-          productsContainer.innerHTML = '<div class="empty">No products found</div>';
-          return;
-        }
-
-        productList.classList.remove('hidden');
-        productsContainer.innerHTML = '';
-
-        products.forEach(product => {
-          const div = document.createElement('div');
-          div.className = 'product-item';
-          div.innerHTML = `
-            <img src="${product.imageUrl || 'https://via.placeholder.com/300x200?text=No+Image'}" 
-                 alt="${product.name}" 
-                 onerror="this.src='https://via.placeholder.com/300x200?text=Image+Error'">
-            <strong>${product.name}</strong><br>
-            ₦${product.price.toFixed(2)} ${product.discount > 0 ? `(${product.discount}% off)` : ''}<br>
-            Category: ${product.category}<br>
-            <button onclick="deleteProduct('${product.id}')">🗑️ Delete</button>
-          `;
-          productsContainer.appendChild(div);
-        });
-      }
-
-      window.deleteProduct = async function(id) {
-        if (!confirm('Are you sure you want to delete this product?')) return;
-
-        try {
-          const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
-
-          if (res.status === 204) {
-            showMessage('✅ Product deleted successfully', 'success');
-          } else {
-            const result = await res.json();
-            throw new Error(result.message || 'Delete failed');
-          }
-
-          fetchProducts();
-        } catch (err) {
-          showMessage(`❌ ${err.message || 'Error deleting product'}`, 'error');
-        }
-      };
-
-      function showMessage(text, type) {
-        if (!messageBox) return;
-        messageBox.textContent = text;
-        messageBox.className = `message ${type}`;
-        messageBox.classList.remove('hidden');
-      }
-
-      function setUploadButtonState(isLoading) {
-        if (!uploadBtn) return;
-        uploadBtn.disabled = isLoading;
-        uploadBtn.textContent = isLoading ? 'Uploading...' : 'Upload Product';
-      }
-    })();
-  </script>
-
-  <!-- ✅ Added Search Logic Script -->
-  <script>
-    function searchProducts() {
-      const query = document.getElementById('searchInput')?.value.trim().toLowerCase();
-      if (!query) return;
-
-      fetch('/api/products')
-        .then(res => res.json())
-        .then(data => {
-          const products = Array.isArray(data) ? data : data.products || [];
-          const filtered = products.filter(p =>
-            p.name.toLowerCase().includes(query) || p.category.toLowerCase().includes(query)
-          );
-
-          const productsContainer = document.getElementById('products-container');
-          if (productsContainer) {
-            if (filtered.length > 0) {
-              productsContainer.innerHTML = '';
-              filtered.forEach(product => {
-                const div = document.createElement('div');
-                div.className = 'product-item';
-                div.innerHTML = `
-                  <img src="${product.imageUrl || 'https://via.placeholder.com/300x200?text=No+Image'}" 
-                       alt="${product.name}" 
-                       onerror="this.src='https://via.placeholder.com/300x200?text=Image+Error'">
-                  <strong>${product.name}</strong><br>
-                  ₦${product.price.toFixed(2)} ${product.discount > 0 ? `(${product.discount}% off)` : ''}<br>
-                  Category: ${product.category}<br>
-                  <button onclick="deleteProduct('${product.id}')">🗑️ Delete</button>
-                `;
-                productsContainer.appendChild(div);
-              });
-            } else {
-              productsContainer.innerHTML = '<div class="empty">No matching products found</div>';
-            }
-          }
-        })
-        .catch(err => console.error('Search failed', err));
+    // Initialize
+    if (uploadForm) {
+      uploadForm.addEventListener('submit', handleFormSubmit);
     }
-  </script>
 
+    // Password verification
+    window.verifyPassword = function() {
+      const input = passwordInput?.value;
+      if (!input || !loginError) return;
+
+      if (input === correctPassword) {
+        loginSection?.classList.add('hidden');
+        uploadForm?.classList.remove('hidden');
+        productList?.classList.remove('hidden');
+        fetchProducts();
+      } else {
+        loginError.classList.remove('hidden');
+      }
+    };
+
+    // Form submission handler
+    async function handleFormSubmit(e) {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData();
+
+      // Get form values
+      const name = form.productName.value.trim();
+      const price = form.productPrice.value;
+      const category = form.productCategory.value.trim();
+      const discount = form.productDiscount.value || 0;
+      const imageFile = form.image.files[0];
+
+      // Validation
+      if (!name || !price || !category) {
+        showMessage('❌ Please fill all required fields', 'error');
+        return;
+      }
+
+      if (isNaN(parseFloat(price)) || isNaN(parseFloat(discount))) {
+        showMessage('❌ Price and discount must be numbers', 'error');
+        return;
+      }
+
+      if (!imageFile) {
+        showMessage('❌ Product image is required', 'error');
+        return;
+      }
+
+      const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!validTypes.includes(imageFile.type)) {
+        showMessage('❌ Only JPG, PNG or WebP images allowed', 'error');
+        return;
+      }
+
+      // Prepare form data
+      formData.append('name', name);
+      formData.append('price', parseFloat(price));
+      formData.append('category', category);
+      formData.append('discount', parseFloat(discount));
+      formData.append('image', imageFile);
+
+      // UI loading state
+      setUploadButtonState(true);
+
+      try {
+        const res = await fetch('/api/products', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || 'Upload failed');
+        }
+
+        const result = await res.json();
+        showMessage('✅ Product uploaded successfully!', 'success');
+        form.reset();
+        fetchProducts();
+      } catch (err) {
+        showMessage(`❌ ${err.message || 'Server error while uploading'}`, 'error');
+      } finally {
+        setUploadButtonState(false);
+      }
+    }
+
+    // Fetch products from server
+    async function fetchProducts() {
+      if (!productsContainer) return;
+
+      try {
+        productsContainer.innerHTML = '<div class="loading">Loading products...</div>';
+        
+        const res = await fetch('/api/products');
+        if (!res.ok) throw new Error('Failed to fetch products');
+        
+        const data = await res.json();
+        const products = Array.isArray(data) ? data : data.products || [];
+        
+        renderProducts(products);
+      } catch (err) {
+        productsContainer.innerHTML = '<div class="error">Error loading products. Please try again.</div>';
+        console.error('Error loading products:', err);
+      }
+    }
+
+    // Render products to the DOM
+    function renderProducts(products) {
+      if (!productsContainer || !productList) return;
+
+      if (products.length === 0) {
+        productsContainer.innerHTML = '<div class="empty">No products found</div>';
+        return;
+      }
+
+      productList.classList.remove('hidden');
+      productsContainer.innerHTML = '';
+
+      products.forEach(product => {
+        const div = document.createElement('div');
+        div.className = 'product-item';
+        div.innerHTML = `
+          <img src="${product.imageUrl || 'https://via.placeholder.com/300x200?text=No+Image'}" 
+               alt="${product.name}" 
+               onerror="this.src='https://via.placeholder.com/300x200?text=Image+Error'">
+          <strong>${product.name}</strong><br>
+          ₦${product.price.toFixed(2)} ${product.discount > 0 ? `(${product.discount}% off)` : ''}<br>
+          Category: ${product.category}<br>
+          <button onclick="deleteProduct('${product.id}')">🗑️ Delete</button>
+        `;
+        productsContainer.appendChild(div);
+      });
+    }
+
+    // Delete product function
+    window.deleteProduct = async function(id) {
+      if (!confirm('Are you sure you want to delete this product?')) return;
+      
+      try {
+        const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+        
+        if (res.status === 204) {
+          showMessage('✅ Product deleted successfully', 'success');
+        } else {
+          const result = await res.json();
+          throw new Error(result.message || 'Delete failed');
+        }
+        
+        fetchProducts();
+      } catch (err) {
+        showMessage(`❌ ${err.message || 'Error deleting product'}`, 'error');
+      }
+    };
+
+    // Helper functions
+    function showMessage(text, type) {
+      if (!messageBox) return;
+      messageBox.textContent = text;
+      messageBox.className = `message ${type}`;
+      messageBox.classList.remove('hidden');
+    }
+
+    function setUploadButtonState(isLoading) {
+      if (!uploadBtn) return;
+      uploadBtn.disabled = isLoading;
+      uploadBtn.textContent = isLoading ? 'Uploading...' : 'Upload Product';
+    }
+  })();
+</script>
 </body>
 </html>
