@@ -4,142 +4,556 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ChiCasual Admin Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
   <style>
+    :root {
+      --primary: #ff6b6b;
+      --secondary: #4ecdc4;
+      --dark: #292f36;
+      --light: #f7fff7;
+      --accent: #ffd166;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #292f36 0%, #1a1e23 100%);
+      color: var(--light);
+      min-height: 100vh;
       padding: 40px;
-      max-width: 600px;
-      margin: auto;
+      overflow-x: hidden;
     }
-    .product-list {
-      margin-top: 30px;
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
     }
-    .product-item {
-      background: #fff;
-      padding: 10px;
-      border: 1px solid #ccc;
-      margin-bottom: 10px;
-    }
-    .product-item img {
-      width: 100%;
-      max-height: 200px;
-      object-fit: contain;
-      margin-bottom: 10px;
-    }
+    
     h2 {
-      color: #001f3f;
-      margin-bottom: 20px;
+      color: var(--accent);
+      margin-bottom: 30px;
+      font-size: 2.5rem;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      text-shadow: 0 0 10px rgba(255, 209, 102, 0.5);
+      animation: glow 2s infinite alternate;
     }
-    input, select, button {
-      margin-bottom: 15px;
-      padding: 10px;
-      font-size: 16px;
+    
+    @keyframes glow {
+      from {
+        text-shadow: 0 0 10px rgba(255, 209, 102, 0.5);
+      }
+      to {
+        text-shadow: 0 0 20px rgba(255, 209, 102, 0.8), 0 0 30px rgba(255, 209, 102, 0.6);
+      }
+    }
+    
+    /* Login Section */
+    #login-section {
+      background: rgba(41, 47, 54, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 500px;
+      margin: 50px auto;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transform-style: preserve-3d;
+      perspective: 1000px;
+      animation: float 6s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0% { transform: translateY(0px) rotateY(0deg); }
+      50% { transform: translateY(-20px) rotateY(5deg); }
+      100% { transform: translateY(0px) rotateY(0deg); }
+    }
+    
+    #admin-password {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      border-radius: 50px;
+      padding: 15px 20px;
+      color: white;
+      font-size: 1rem;
       width: 100%;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+      border-left: 3px solid var(--primary);
     }
+    
+    #admin-password:focus {
+      outline: none;
+      background: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 0 15px rgba(255, 107, 107, 0.5);
+    }
+    
+    /* Buttons */
     button {
-      background-color: #001f3f;
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
       color: white;
       border: none;
+      padding: 15px 30px;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 50px;
       cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      position: relative;
+      overflow: hidden;
     }
+    
+    button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    button:active {
+      transform: translateY(1px);
+    }
+    
     button:disabled {
-      background-color: #aaa;
+      background: #aaa;
       cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
     }
-    .hidden {
-      display: none;
+    
+    button::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transform: translateX(-100%);
+      transition: transform 0.6s ease;
     }
-    .message {
-      padding: 10px;
-      margin-top: 10px;
-      font-size: 14px;
+    
+    button:hover::after {
+      transform: translateX(100%);
     }
-    .success {
-      background-color: #e6ffe6;
-      border: 1px solid #8bc34a;
+    
+    /* Admin Content */
+    #admin-content {
+      background: rgba(41, 47, 54, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transform: scale(0.95);
+      transition: transform 0.5s ease;
     }
-    .error {
-      background-color: #ffe6e6;
-      border: 1px solid #f44336;
+    
+    #admin-content:hover {
+      transform: scale(1);
     }
+    
+    /* Search Section */
     .search-container {
       display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
+      gap: 15px;
+      margin-bottom: 30px;
     }
+    
     .search-container input {
       flex: 1;
-      margin-bottom: 0;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      border-radius: 50px;
+      padding: 15px 25px;
+      color: white;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      border-left: 3px solid var(--secondary);
     }
+    
+    .search-container input:focus {
+      outline: none;
+      background: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 0 15px rgba(78, 205, 196, 0.5);
+    }
+    
     .search-container button {
-      width: auto;
-      padding: 10px 20px;
+      padding: 15px 25px;
     }
+    
+    /* Upload Form */
+    #upload-form {
+      background: rgba(41, 47, 54, 0.6);
+      padding: 30px;
+      border-radius: 15px;
+      margin-bottom: 40px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: all 0.5s ease;
+    }
+    
+    #upload-form:hover {
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      transform: translateY(-5px);
+    }
+    
+    #upload-form input,
+    #upload-form select {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      border-radius: 50px;
+      padding: 15px 20px;
+      color: white;
+      font-size: 1rem;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+      border-left: 3px solid var(--accent);
+    }
+    
+    #upload-form input:focus,
+    #upload-form select:focus {
+      outline: none;
+      background: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 0 15px rgba(255, 209, 102, 0.5);
+    }
+    
+    #upload-form select option {
+      background: var(--dark);
+      color: white;
+    }
+    
+    /* File Input Styling */
+    #upload-form input[type="file"] {
+      padding: 10px;
+      border-radius: 10px;
+    }
+    
+    #upload-form input[type="file"]::file-selector-button {
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 50px;
+      cursor: pointer;
+      margin-right: 15px;
+      font-family: 'Poppins', sans-serif;
+      transition: all 0.3s ease;
+    }
+    
+    #upload-form input[type="file"]::file-selector-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Product Grid */
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 25px;
+      margin-top: 30px;
+    }
+    
+    .product-item {
+      background: rgba(41, 47, 54, 0.6);
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: all 0.4s ease;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+      animation: fadeInUp 0.5s ease forwards;
+      opacity: 0;
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .product-item:hover {
+      transform: translateY(-10px) scale(1.03);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .product-item::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.03), transparent);
+      z-index: -1;
+    }
+    
+    .product-item img {
+      width: 100%;
+      height: 180px;
+      object-fit: contain;
+      margin-bottom: 15px;
+      border-radius: 10px;
+      transition: transform 0.5s ease;
+    }
+    
+    .product-item:hover img {
+      transform: scale(1.1) rotate(2deg);
+    }
+    
+    .product-item strong {
+      font-size: 1.2rem;
+      margin-bottom: 5px;
+      color: var(--light);
+    }
+    
+    .product-item .price {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin: 5px 0;
+    }
+    
+    .product-item .discount {
+      color: var(--primary);
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 5px;
+    }
+    
+    .product-item .category {
+      font-size: 0.8rem;
+      color: var(--secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 15px;
+    }
+    
+    .product-item button {
+      margin-top: auto;
+      width: 100%;
+      padding: 10px;
+      font-size: 0.9rem;
+      background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+    }
+    
+    .product-item button:hover {
+      background: linear-gradient(45deg, #ff5252, #ff7676);
+    }
+    
+    /* Messages */
+    .message {
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      text-align: center;
+      animation: slideIn 0.5s ease forwards;
+    }
+    
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+    
+    .success {
+      background: rgba(46, 213, 115, 0.2);
+      border: 1px solid rgba(46, 213, 115, 0.5);
+      color: #2ed573;
+    }
+    
+    .error {
+      background: rgba(255, 71, 87, 0.2);
+      border: 1px solid rgba(255, 71, 87, 0.5);
+      color: #ff4757;
+    }
+    
+    /* Loading States */
     .loading {
-      padding: 15px;
+      padding: 30px;
       text-align: center;
-      color: #666;
+      color: var(--secondary);
+      font-size: 1.2rem;
+      animation: pulse 1.5s infinite;
     }
+    
+    @keyframes pulse {
+      0% { opacity: 0.6; }
+      50% { opacity: 1; }
+      100% { opacity: 0.6; }
+    }
+    
     .empty {
-      padding: 15px;
+      padding: 30px;
       text-align: center;
-      color: #666;
+      color: var(--secondary);
       font-style: italic;
+      font-size: 1.1rem;
+      animation: fadeIn 1s ease;
+    }
+    
+    /* Hidden Elements */
+    .hidden {
+      display: none;
+      animation: fadeOut 0.3s ease;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+      .products-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    
+    @media (max-width: 900px) {
+      .products-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      body {
+        padding: 20px;
+      }
+    }
+    
+    @media (max-width: 600px) {
+      .products-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .container {
+        padding: 10px;
+      }
+      
+      #login-section, #admin-content {
+        padding: 20px;
+      }
+      
+      .search-container {
+        flex-direction: column;
+      }
+      
+      .search-container button {
+        width: 100%;
+      }
+    }
+    
+    /* Particle Background */
+    .particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none;
+    }
+    
+    .particle {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 50%;
+      animation: floatParticle linear infinite;
+    }
+    
+    @keyframes floatParticle {
+      0% {
+        transform: translateY(0) translateX(0);
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      90% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-100vh) translateX(100px);
+        opacity: 0;
+      }
     }
   </style>
 </head>
 <body>
+  <!-- Particle Background -->
+  <div class="particles" id="particles"></div>
 
-  <h2>ChiCasual Admin Panel</h2>
+  <div class="container">
+    <h2 class="animate__animated animate__pulse animate__infinite">ChiCasual Admin Panel</h2>
 
-  <!-- Login Section -->
-  <div id="login-section">
-    <input type="password" id="admin-password" placeholder="Enter admin password" required />
-    <button onclick="verifyPassword()">Login</button>
-    <div id="login-error" class="message error hidden">Incorrect password.</div>
-  </div>
-
-  <!-- Admin Content (shown after login) -->
-  <div id="admin-content" class="hidden">
-    <!-- Search Section -->
-    <div class="search-container">
-      <input 
-        type="text" 
-        id="search-input" 
-        placeholder="Search products by name or category..."
-        aria-label="Search products"
-      >
-      <button id="search-button">Search</button>
+    <!-- Login Section -->
+    <div id="login-section" class="animate__animated animate__fadeIn">
+      <input type="password" id="admin-password" placeholder="Enter admin password" required />
+      <button onclick="verifyPassword()">Login</button>
+      <div id="login-error" class="message error hidden">Incorrect password.</div>
     </div>
 
-    <!-- Upload Form Section -->
-    <form id="upload-form" enctype="multipart/form-data">
-      <input type="text" name="productName" placeholder="Product Name" required />
-      <input type="number" name="productPrice" placeholder="Price (₦)" required />
-      
-      <select name="productCategory" required>
-        <option value="">Select Category</option>
-        <option value="shoe">Shoe</option>
-        <option value="senators">Senators</option>
-        <option value="caps">Caps</option>
-        <option value="shirts">Shirts</option>
-        <option value="shorts">Shorts</option>
-        <option value="trousers">Trousers</option>
-      </select>
+    <!-- Admin Content (shown after login) -->
+    <div id="admin-content" class="hidden animate__animated animate__fadeInUp">
+      <!-- Search Section -->
+      <div class="search-container">
+        <input 
+          type="text" 
+          id="search-input" 
+          placeholder="Search products by name or category..."
+          aria-label="Search products"
+          class="animate__animated animate__fadeInLeft"
+        >
+        <button id="search-button" class="animate__animated animate__fadeInRight">Search</button>
+      </div>
 
-      <input type="number" name="productDiscount" placeholder="Discount (%)" />
-      <input type="file" name="image" accept="image/*" required />
-      <input type="hidden" name="adminPassword" id="hidden-password" />
-      <button type="submit" id="upload-btn">Upload Product</button>
-      <div id="upload-message" class="message hidden"></div>
-    </form>
+      <!-- Upload Form Section -->
+      <form id="upload-form" enctype="multipart/form-data" class="animate__animated animate__zoomIn">
+        <input type="text" name="productName" placeholder="Product Name" required />
+        <input type="number" name="productPrice" placeholder="Price (₦)" required />
+        
+        <select name="productCategory" required>
+          <option value="">Select Category</option>
+          <option value="shoe">Shoe</option>
+          <option value="senators">Senators</option>
+          <option value="caps">Caps</option>
+          <option value="shirts">Shirts</option>
+          <option value="shorts">Shorts</option>
+          <option value="trousers">Trousers</option>
+        </select>
 
-    <!-- Product List Section -->
-    <div class="product-list">
-      <h3>Products</h3>
-      <div id="products-container">
-        <!-- Product items will be dynamically inserted here -->
+        <input type="number" name="productDiscount" placeholder="Discount (%)" />
+        <input type="file" name="image" accept="image/*" required />
+        <input type="hidden" name="adminPassword" id="hidden-password" />
+        <button type="submit" id="upload-btn">Upload Product</button>
+        <div id="upload-message" class="message hidden"></div>
+      </form>
+
+      <!-- Product List Section -->
+      <div class="product-list">
+        <h3 class="animate__animated animate__fadeIn">Products</h3>
+        <div id="products-container">
+          <!-- Product items will be dynamically inserted here -->
+        </div>
       </div>
     </div>
   </div>
@@ -160,6 +574,35 @@
     const messageBox = document.getElementById('upload-message');
     const searchInput = document.getElementById('search-input');
     const searchButton = document.getElementById('search-button');
+
+    // Create particle background
+    function createParticles() {
+      const particlesContainer = document.getElementById('particles');
+      const particleCount = 50;
+      
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.classList.add('particle');
+        
+        // Random properties
+        const size = Math.random() * 5 + 2;
+        const posX = Math.random() * 100;
+        const duration = Math.random() * 20 + 10;
+        const delay = Math.random() * 10;
+        
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        particle.style.left = `${posX}%`;
+        particle.style.bottom = `-${size}px`;
+        particle.style.animationDuration = `${duration}s`;
+        particle.style.animationDelay = `${delay}s`;
+        
+        particlesContainer.appendChild(particle);
+      }
+    }
+    
+    // Initialize particles
+    createParticles();
 
     // Initialize
     if (uploadForm) {
@@ -190,10 +633,52 @@
         loginSection?.classList.add('hidden');
         adminContent?.classList.remove('hidden');
         fetchProducts();
+        
+        // Add celebration effect
+        for (let i = 0; i < 30; i++) {
+          setTimeout(() => {
+            createConfetti();
+          }, i * 100);
+        }
       } else {
         loginError.classList.remove('hidden');
+        loginSection.classList.add('animate__animated', 'animate__headShake');
+        setTimeout(() => {
+          loginSection.classList.remove('animate__animated', 'animate__headShake');
+        }, 1000);
       }
     };
+
+    // Create confetti effect
+    function createConfetti() {
+      const confetti = document.createElement('div');
+      confetti.style.position = 'fixed';
+      confetti.style.width = '15px';
+      confetti.style.height = '15px';
+      confetti.style.backgroundColor = getRandomColor();
+      confetti.style.borderRadius = '50%';
+      confetti.style.top = '0';
+      confetti.style.left = Math.random() * 100 + 'vw';
+      confetti.style.zIndex = '9999';
+      confetti.style.transform = 'rotate(' + Math.random() * 360 + 'deg)';
+      
+      document.body.appendChild(confetti);
+      
+      const animation = confetti.animate([
+        { top: '0', opacity: 1, transform: 'rotate(0deg) scale(1)' },
+        { top: '100vh', opacity: 0, transform: 'rotate(360deg) scale(0.2)' }
+      ], {
+        duration: 2000,
+        easing: 'cubic-bezier(0.1, 0.8, 0.3, 1)'
+      });
+      
+      animation.onfinish = () => confetti.remove();
+    }
+    
+    function getRandomColor() {
+      const colors = ['#ff6b6b', '#4ecdc4', '#ffd166', '#a5ffd6', '#ff9ff3'];
+      return colors[Math.floor(Math.random() * colors.length)];
+    }
 
     // Form submission handler
     async function handleFormSubmit(e) {
@@ -211,6 +696,10 @@
       // Validation
       if (!name || !price || !category) {
         showMessage('❌ Please fill all required fields', 'error');
+        form.classList.add('animate__animated', 'animate__shakeX');
+        setTimeout(() => {
+          form.classList.remove('animate__animated', 'animate__shakeX');
+        }, 1000);
         return;
       }
 
@@ -254,6 +743,10 @@
         const result = await res.json();
         showMessage('✅ Product uploaded successfully!', 'success');
         form.reset();
+        
+        // Add celebration effect
+        createConfetti();
+        
         fetchProducts(searchInput?.value.trim() || '');
       } catch (err) {
         showMessage(`❌ ${err.message || 'Server error while uploading'}`, 'error');
@@ -267,7 +760,7 @@
       if (!productsContainer) return;
 
       try {
-        productsContainer.innerHTML = '<div class="loading">Loading products...</div>';
+        productsContainer.innerHTML = '<div class="loading">Loading products... ✨</div>';
         
         let url = '/api/products';
         if (searchQuery.trim() !== '') {
@@ -292,22 +785,24 @@
       if (!productsContainer) return;
 
       if (products.length === 0) {
-        productsContainer.innerHTML = '<div class="empty">No products found</div>';
+        productsContainer.innerHTML = '<div class="empty">No products found 🧐</div>';
         return;
       }
 
       productsContainer.innerHTML = '';
 
-      products.forEach(product => {
+      products.forEach((product, index) => {
         const div = document.createElement('div');
         div.className = 'product-item';
+        div.style.animationDelay = `${index * 0.1}s`;
         div.innerHTML = `
           <img src="${product.imageUrl || 'https://via.placeholder.com/300x200?text=No+Image'}" 
                alt="${product.name}" 
                onerror="this.src='https://via.placeholder.com/300x200?text=Image+Error'">
-          <strong>${product.name}</strong><br>
-          ₦${product.price.toFixed(2)} ${product.discount > 0 ? `(${product.discount}% off)` : ''}<br>
-          Category: ${product.category}<br>
+          <strong>${product.name}</strong>
+          <div class="price">₦${product.price.toFixed(2)}</div>
+          ${product.discount > 0 ? `<div class="discount">${product.discount}% OFF!</div>` : ''}
+          <div class="category">${product.category}</div>
           <button onclick="deleteProduct('${product.id}')">🗑️ Delete</button>
         `;
         productsContainer.appendChild(div);
@@ -323,6 +818,15 @@
         
         if (res.status === 204) {
           showMessage('✅ Product deleted successfully', 'success');
+          
+          // Add explosion effect
+          const deletedItem = document.querySelector(`[onclick="deleteProduct('${id}')"]`)?.parentElement;
+          if (deletedItem) {
+            deletedItem.classList.add('animate__animated', 'animate__hinge');
+            setTimeout(() => {
+              deletedItem.remove();
+            }, 2000);
+          }
         } else {
           const result = await res.json();
           throw new Error(result.message || 'Delete failed');
@@ -338,14 +842,22 @@
     function showMessage(text, type) {
       if (!messageBox) return;
       messageBox.textContent = text;
-      messageBox.className = `message ${type}`;
+      messageBox.className = `message ${type} animate__animated animate__fadeIn`;
       messageBox.classList.remove('hidden');
+      
+      setTimeout(() => {
+        messageBox.classList.add('animate__fadeOut');
+        setTimeout(() => {
+          messageBox.classList.add('hidden');
+          messageBox.classList.remove('animate__fadeOut');
+        }, 3000);
+      }, 5000);
     }
 
     function setUploadButtonState(isLoading) {
       if (!uploadBtn) return;
       uploadBtn.disabled = isLoading;
-      uploadBtn.textContent = isLoading ? 'Uploading...' : 'Upload Product';
+      uploadBtn.textContent = isLoading ? 'Uploading... 🚀' : 'Upload Product';
     }
   })();
 </script>
