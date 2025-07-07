@@ -180,6 +180,114 @@ app.delete('/api/products/:id', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+const Flutterwave = require('flutterwave-node-v3');
+const carts = new Map(); // Add this with your other data stores
+
+// Initialize Flutterwave
+const flw = new Flutterwave(
+  process.env.FLW_PUBLIC_KEY,
+  process.env.FLW_SECRET_KEY
+);
+
+// Unified Cart Endpoint
+app.route('/api/cart/:userId')
+  .get((req, res) => res.json(carts.get(req.params.userId) || []))
+  .post((req, res) => {
+    const { productId, quantity } = req.body;
+    const product = products.find(p => p.id === productId);
+    
+    if (!product || !quantity || quantity <= 0) {
+      return res.status(400).json({ error: 'Invalid request' });
+    }
+    
+    const userCart = carts.get(req.params.userId) || [];
+    const existingItem = userCart.find(item => item.productId === productId);
+    
+    if (existingItem) {
+      existingItem.quantity += quantity;
+    } else {
+      userCart.push({
+        productId,
+        quantity,
+        price: product.price,
+        name: product.name,
+        imageUrl: product.imageUrl
+      });
+    }
+    
+    carts.set(req.params.userId, userCart);
+    res.json(userCart);
+  })
+  .delete((req, res) => {
+    carts.delete(req.params.userId);
+    res.status(204).send();
+  });
+
+// Update Cart Item
+app.put('/api/cart/:userId/:productId', (req, res) => {
+  const userCart = carts.get(req.params.userId);
+  if (!userCart) return res.status(404).json({ error: 'Cart not found' });
+  
+  const item = userCart.find(i => i.productId === req.params.productId);
+  if (!item) return res.status(404).json({ error: 'Item not found' });
+  
+  if (req.body.quantity <= 0) {
+    userCart.splice(userCart.indexOf(item), 1);
+  } else {
+    item.quantity = req.body.quantity;
+  }
+  
+  res.json(userCart);
+});
+
+// Payment Processing
+app.post('/api/payment/initiate', async (req, res) => {
+  try {
+    const { userId, email } = req.body;
+    const userCart = carts.get(userId);
+    
+    if (!userCart?.length) {
+      return res.status(400).json({ error: 'Cart is empty' });
+    }
+    
+    const amount = userCart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    const paymentData = {
+      tx_ref: `order-${Date.now()}`,
+      amount: amount.toFixed(2),
+      currency: 'USD',
+      payment_options: 'card',
+      customer: { email },
+      customizations: {
+        title: 'Your Store',
+        description: 'Cart Payment'
+      }
+    };
+    
+    const response = await flw.Payment.initialize(paymentData);
+    res.json({
+      paymentLink: response.data.link,
+      transactionId: response.data.tx_ref
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Payment processing failed' });
+  }
+});
+
+// Payment Webhook
+app.post('/api/payment/webhook', (req, res) => {
+  if (req.headers['verif-hash'] !== process.env.FLW_WEBHOOK_SECRET) {
+    return res.status(401).end();
+  }
+  
+  if (req.body.status === 'successful') {
+    // Handle successful payment:
+    // - Create order record
+    // - Clear cart (carts.delete(req.body.meta.userId))
+    // - Send confirmation email
+  }
+  
+  res.status(200).end();
+});
 
 // Start server
 app.listen(PORT, () => {
