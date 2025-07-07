@@ -42,10 +42,28 @@ const uploadToCloudinary = async (fileBuffer) => {
   });
 };
 
+// Search Products - New endpoint
+app.get('/api/products/search', (req, res) => {
+  const { q } = req.query;
+  
+  if (!q || q.trim() === '') {
+    return res.status(400).json({ error: 'Search query is required' });
+  }
+
+  const searchTerm = q.toLowerCase();
+  const results = products.filter(product => 
+    product.name.toLowerCase().includes(searchTerm) ||
+    product.category.toLowerCase().includes(searchTerm) ||
+    product.description?.toLowerCase().includes(searchTerm)
+  );
+
+  res.json(results);
+});
+
 // Create Product
 app.post('/api/products', upload.single('image'), async (req, res) => {
   try {
-    const { name, price, category, discount } = req.body;
+    const { name, price, category, discount, description } = req.body;
     const file = req.file;
 
     // Validation
@@ -62,6 +80,7 @@ app.post('/api/products', upload.single('image'), async (req, res) => {
       name,
       price: parseFloat(price),
       category,
+      description: description || '',
       discount: discount ? parseFloat(discount) : 0,
       imageUrl: result.secure_url,
       cloudinaryId: result.public_id,
@@ -76,8 +95,20 @@ app.post('/api/products', upload.single('image'), async (req, res) => {
   }
 });
 
-// Get All Products
+// Get All Products (updated to support basic search via query param)
 app.get('/api/products', (req, res) => {
+  const { q } = req.query;
+  
+  if (q && q.trim() !== '') {
+    const searchTerm = q.toLowerCase();
+    const results = products.filter(product => 
+      product.name.toLowerCase().includes(searchTerm) ||
+      product.category.toLowerCase().includes(searchTerm) ||
+      product.description?.toLowerCase().includes(searchTerm)
+    );
+    return res.json(results);
+  }
+  
   res.json(products);
 });
 
@@ -92,7 +123,7 @@ app.get('/api/products/:id', (req, res) => {
 app.put('/api/products/:id', upload.single('image'), async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, price, category, discount } = req.body;
+    const { name, price, category, discount, description } = req.body;
     const file = req.file;
 
     const productIndex = products.findIndex(p => p.id === id);
@@ -105,6 +136,7 @@ app.put('/api/products/:id', upload.single('image'), async (req, res) => {
       name: name || products[productIndex].name,
       price: price ? parseFloat(price) : products[productIndex].price,
       category: category || products[productIndex].category,
+      description: description || products[productIndex].description,
       discount: discount ? parseFloat(discount) : products[productIndex].discount,
     };
 
