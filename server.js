@@ -4,292 +4,341 @@ const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { v4: uuidv4 } = require('uuid');
 const bodyParser = require('body-parser');
+const { createClient } = require('@supabase/supabase-js');
+const Flutterwave = require('flutterwave-node-v3');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Initialize Supabase
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
+);
+
+// Cloudinary Config
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 // Middleware
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('./'));
 
-// Cloudinary Configuration with env variables
-cloudinary.config({
-  cloud_name: 'dn71wkf7j',
-  api_key: '297328628727681',
-  api_secret: 'oqn56WmLwfOT7FK4RU1cX5nBvcA'
-});
+// Auth Middleware
+const authenticate = async (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'Unauthorized' });
 
-// In-memory database (Replace with real DB in production)
-let products = [];
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (error) throw error;
+    req.user = user;
+    next();
+  } catch (error) {
+    res.status(401).json({ error: 'Invalid token' });
+  }
+};
 
-// Multer configuration for file handling
+// File Handling
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// Utility to upload image to Cloudinary
+// Cloudinary Upload Utility
 const uploadToCloudinary = async (fileBuffer) => {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       { folder: 'ecommerce-products' },
-      (error, result) => {
-        if (result) resolve(result);
-        else reject(error);
-      }
+      (error, result) => error ? reject(error) : resolve(result)
     );
-    
     stream.end(fileBuffer);
   });
 };
 
-// Search Products - New endpoint
-app.get('/api/products/search', (req, res) => {
+// Product Search
+app.get('/api/products/search', async (req, res) => {
   const { q } = req.query;
-  
-  if (!q || q.trim() === '') {
-    return res.status(400).json({ error: 'Search query is required' });
+  if (!q?.trim()) return res.status(400).json({ error: 'Search query required' });
+
+  try {
+    const { data, error } = await supabase.rpc('search_products', {
+      search_term: q
+    });
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: 'Search failed' });
   }
-
-  const searchTerm = q.toLowerCase();
-  const results = products.filter(product => 
-    product.name.toLowerCase().includes(searchTerm) ||
-    product.category.toLowerCase().includes(searchTerm) ||
-    product.description?.toLowerCase().includes(searchTerm)
-  );
-
-  res.json(results);
 });
 
-// Create Product
-app.post('/api/products', upload.single('image'), async (req, res) => {
+// Create Product (Admin Only)
+app.post('/api/products', authenticate, upload.single('image'), async (req, res) => {
+  if (!req.user.user_metadata?.is_admin) 
+    return res.status(403).json({ error: 'Forbidden' });
+
   try {
     const { name, price, category, discount, description } = req.body;
-    const file = req.file;
-
-    // Validation
-    if (!name || !price || !category || !file) {
+    if (!name || !price || !category || !req.file) 
       return res.status(400).json({ error: 'Missing required fields' });
-    }
 
     // Upload image
-    const result = await uploadToCloudinary(file.buffer);
+    const result = await uploadToCloudinary(req.file.buffer);
 
-    // Create product object
-    const newProduct = {
-      id: uuidv4(),
-      name,
-      price: parseFloat(price),
-      category,
-      description: description || '',
-      discount: discount ? parseFloat(discount) : 0,
-      imageUrl: result.secure_url,
-      cloudinaryId: result.public_id,
-      createdAt: new Date().toISOString()
-    };
+    // Insert into Supabase
+    const { data, error } = await supabase
+      .from('products')
+      .insert({
+        name,
+        price: parseFloat(price),
+        category,
+        description: description || '',
+        discount: discount ? parseFloat(discount) : 0,
+        image_url: result.secure_url,
+        cloudinary_id: result.public_id
+      })
+      .select()
+      .single();
 
-    products.push(newProduct);
-    res.status(201).json(newProduct);
+    if (error) throw error;
+    res.status(201).json(data);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Product creation failed' });
   }
 });
 
-// Get All Products (updated to support basic search via query param)
-app.get('/api/products', (req, res) => {
-  const { q } = req.query;
-  
-  if (q && q.trim() !== '') {
-    const searchTerm = q.toLowerCase();
-    const results = products.filter(product => 
-      product.name.toLowerCase().includes(searchTerm) ||
-      product.category.toLowerCase().includes(searchTerm) ||
-      product.description?.toLowerCase().includes(searchTerm)
-    );
-    return res.json(results);
+// Get Products
+app.get('/api/products', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch products' });
   }
-  
-  res.json(products);
 });
 
-// Get Single Product
-app.get('/api/products/:id', (req, res) => {
-  const product = products.find(p => p.id === req.params.id);
-  if (!product) return res.status(404).json({ error: 'Product not found' });
-  res.json(product);
+// Single Product
+app.get('/api/products/:id', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', req.params.id)
+      .single();
+    
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    res.status(404).json({ error: 'Product not found' });
+  }
 });
 
 // Update Product
-app.put('/api/products/:id', upload.single('image'), async (req, res) => {
+app.put('/api/products/:id', authenticate, upload.single('image'), async (req, res) => {
+  if (!req.user.user_metadata?.is_admin)
+    return res.status(403).json({ error: 'Forbidden' });
+
   try {
-    const { id } = req.params;
-    const { name, price, category, discount, description } = req.body;
-    const file = req.file;
-
-    const productIndex = products.findIndex(p => p.id === id);
-    if (productIndex === -1) {
-      return res.status(404).json({ error: 'Product not found' });
-    }
-
-    let updateData = {
-      ...products[productIndex],
-      name: name || products[productIndex].name,
-      price: price ? parseFloat(price) : products[productIndex].price,
-      category: category || products[productIndex].category,
-      description: description || products[productIndex].description,
-      discount: discount ? parseFloat(discount) : products[productIndex].discount,
-    };
+    // Get existing product
+    const { data: existing, error: fetchError } = await supabase
+      .from('products')
+      .select('cloudinary_id')
+      .eq('id', req.params.id)
+      .single();
+    
+    if (fetchError) throw fetchError;
 
     // Handle image update
-    if (file) {
-      // Delete old image from Cloudinary
-      await cloudinary.uploader.destroy(products[productIndex].cloudinaryId);
-      
-      // Upload new image
-      const result = await uploadToCloudinary(file.buffer);
-      updateData.imageUrl = result.secure_url;
-      updateData.cloudinaryId = result.public_id;
+    let updateData = { ...req.body };
+    if (req.file) {
+      // Delete old image
+      await cloudinary.uploader.destroy(existing.cloudinary_id);
+      const result = await uploadToCloudinary(req.file.buffer);
+      updateData.image_url = result.secure_url;
+      updateData.cloudinary_id = result.public_id;
     }
 
-    products[productIndex] = updateData;
-    res.json(products[productIndex]);
+    // Numeric conversions
+    if (updateData.price) updateData.price = parseFloat(updateData.price);
+    if (updateData.discount) updateData.discount = parseFloat(updateData.discount);
+
+    // Update database
+    const { data, error } = await supabase
+      .from('products')
+      .update(updateData)
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.json(data);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Update failed' });
   }
 });
 
 // Delete Product
-app.delete('/api/products/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const productIndex = products.findIndex(p => p.id === id);
-    
-    if (productIndex === -1) {
-      return res.status(404).json({ error: 'Product not found' });
-    }
+app.delete('/api/products/:id', authenticate, async (req, res) => {
+  if (!req.user.user_metadata?.is_admin)
+    return res.status(403).json({ error: 'Forbidden' });
 
-    // Delete image from Cloudinary
-    await cloudinary.uploader.destroy(products[productIndex].cloudinaryId);
+  try {
+    // Get product data
+    const { data: product, error: fetchError } = await supabase
+      .from('products')
+      .select('cloudinary_id')
+      .eq('id', req.params.id)
+      .single();
     
-    // Remove product
-    products = products.filter(p => p.id !== id);
+    if (fetchError) throw fetchError;
+
+    // Delete from Cloudinary
+    await cloudinary.uploader.destroy(product.cloudinary_id);
+
+    // Delete from database
+    const { error } = await supabase
+      .from('products')
+      .delete()
+      .eq('id', req.params.id);
+    
+    if (error) throw error;
     res.status(204).send();
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Deletion failed' });
   }
 });
-const Flutterwave = require('flutterwave-node-v3');
-const carts = new Map(); // Add this with your other data stores
 
-// Initialize Flutterwave
+// Cart Endpoints
+app.route('/api/cart')
+  .all(authenticate)
+  .get(async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from('carts')
+        .select('product_id, quantity, products(name, price, image_url)')
+        .eq('user_id', req.user.id)
+        .join('products', 'product_id', 'id');
+      
+      if (error) throw error;
+      res.json(data.map(item => ({
+        ...item.products,
+        product_id: item.product_id,
+        quantity: item.quantity
+      })));
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to get cart' });
+    }
+  })
+  .post(async (req, res) => {
+    try {
+      const { product_id, quantity } = req.body;
+      if (!product_id || !quantity || quantity < 1)
+        return res.status(400).json({ error: 'Invalid request' });
+
+      const { error } = await supabase
+        .from('carts')
+        .upsert(
+          { user_id: req.user.id, product_id, quantity },
+          { onConflict: 'user_id,product_id' }
+        );
+      
+      if (error) throw error;
+      res.status(201).json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Cart update failed' });
+    }
+  })
+  .delete(async (req, res) => {
+    try {
+      const { error } = await supabase
+        .from('carts')
+        .delete()
+        .eq('user_id', req.user.id);
+      
+      if (error) throw error;
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: 'Cart clearance failed' });
+    }
+  });
+
+// Update Cart Item
+app.put('/api/cart/:product_id', authenticate, async (req, res) => {
+  try {
+    const { quantity } = req.body;
+    if (quantity < 1) {
+      // Remove item
+      const { error } = await supabase
+        .from('carts')
+        .delete()
+        .eq('user_id', req.user.id)
+        .eq('product_id', req.params.product_id);
+      
+      if (error) throw error;
+      return res.status(204).send();
+    }
+
+    // Update quantity
+    const { error } = await supabase
+      .from('carts')
+      .update({ quantity })
+      .eq('user_id', req.user.id)
+      .eq('product_id', req.params.product_id);
+    
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Cart update failed' });
+  }
+});
+
+// Payment Processing
 const flw = new Flutterwave(
   process.env.FLW_PUBLIC_KEY,
   process.env.FLW_SECRET_KEY
 );
 
-// Unified Cart Endpoint
-app.route('/api/cart/:userId')
-  .get((req, res) => res.json(carts.get(req.params.userId) || []))
-  .post((req, res) => {
-    const { productId, quantity } = req.body;
-    const product = products.find(p => p.id === productId);
-    
-    if (!product || !quantity || quantity <= 0) {
-      return res.status(400).json({ error: 'Invalid request' });
-    }
-    
-    const userCart = carts.get(req.params.userId) || [];
-    const existingItem = userCart.find(item => item.productId === productId);
-    
-    if (existingItem) {
-      existingItem.quantity += quantity;
-    } else {
-      userCart.push({
-        productId,
-        quantity,
-        price: product.price,
-        name: product.name,
-        imageUrl: product.imageUrl
-      });
-    }
-    
-    carts.set(req.params.userId, userCart);
-    res.json(userCart);
-  })
-  .delete((req, res) => {
-    carts.delete(req.params.userId);
-    res.status(204).send();
-  });
-
-// Update Cart Item
-app.put('/api/cart/:userId/:productId', (req, res) => {
-  const userCart = carts.get(req.params.userId);
-  if (!userCart) return res.status(404).json({ error: 'Cart not found' });
-  
-  const item = userCart.find(i => i.productId === req.params.productId);
-  if (!item) return res.status(404).json({ error: 'Item not found' });
-  
-  if (req.body.quantity <= 0) {
-    userCart.splice(userCart.indexOf(item), 1);
-  } else {
-    item.quantity = req.body.quantity;
-  }
-  
-  res.json(userCart);
-});
-
-// Payment Processing
-app.post('/api/payment/initiate', async (req, res) => {
+app.post('/api/payment/initiate', authenticate, async (req, res) => {
   try {
-    const { userId, email } = req.body;
-    const userCart = carts.get(userId);
+    // Get user cart
+    const { data: cart, error: cartError } = await supabase
+      .from('carts')
+      .select('product_id, quantity, products(price)')
+      .eq('user_id', req.user.id)
+      .join('products', 'product_id', 'id');
     
-    if (!userCart?.length) {
-      return res.status(400).json({ error: 'Cart is empty' });
-    }
-    
-    const amount = userCart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    if (cartError) throw cartError;
+    if (!cart?.length) return res.status(400).json({ error: 'Cart is empty' });
+
+    // Calculate total
+    const amount = cart.reduce((total, item) => 
+      total + (item.products.price * item.quantity), 0);
+
+    // Create payment
     const paymentData = {
-      tx_ref: `order-${Date.now()}`,
+      tx_ref: `order-${Date.now()}-${req.user.id}`,
       amount: amount.toFixed(2),
       currency: 'USD',
-      payment_options: 'card',
-      customer: { email },
-      customizations: {
-        title: 'Your Store',
-        description: 'Cart Payment'
-      }
+      customer: { email: req.user.email },
+      redirect_url: process.env.PAYMENT_REDIRECT_URL
     };
-    
+
     const response = await flw.Payment.initialize(paymentData);
     res.json({
       paymentLink: response.data.link,
       transactionId: response.data.tx_ref
     });
   } catch (error) {
-    res.status(500).json({ error: 'Payment processing failed' });
+    res.status(500).json({ error: 'Payment initiation failed' });
   }
-});
-
-// Payment Webhook
-app.post('/api/payment/webhook', (req, res) => {
-  if (req.headers['verif-hash'] !== process.env.FLW_WEBHOOK_SECRET) {
-    return res.status(401).end();
-  }
-  
-  if (req.body.status === 'successful') {
-    // Handle successful payment:
-    // - Create order record
-    // - Clear cart (carts.delete(req.body.meta.userId))
-    // - Send confirmation email
-  }
-  
-  res.status(200).end();
 });
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
