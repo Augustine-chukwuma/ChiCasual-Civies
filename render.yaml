@@ -1,11 +1,37 @@
 services:
   - type: web
-    name: chicasual-civies
+    name: chicasual
     env: node
+    region: oregon  
     plan: free
     buildCommand: npm install
-    startCommand: node server.js
+    startCommand: node server.js  # or app.js or server.js depending on your entry file
     envVars:
       - key: NODE_ENV
         value: production
-    autoDeploy: true
+
+      # Supabase
+      - key: SUPABASE_URL
+        value: https://your-project.supabase.co
+      - key: SUPABASE_KEY
+        value: your-supabase-service-role-key  # NOT anon/public key
+
+      # Cloudinary
+      - key: CLOUDINARY_CLOUD_NAME
+        value: dn71wkf7j
+      - key: CLOUDINARY_API_KEY
+        value: 297328628727681
+      - key: CLOUDINARY_API_SECRET
+        value: oqn56WmLwfOT7FK4RU1cX5nBvcA
+
+      # Flutterwave
+      - key: FLW_PUBLIC_KEY
+        value: your-flutterwave-public-key
+      - key: FLW_SECRET_KEY
+        value: your-flutterwave-secret-key
+      - key: FLW_WEBHOOK_SECRET
+        value: your-webhook-secret
+
+      # Redirect after payment
+      - key: PAYMENT_REDIRECT_URL
+        value: https://your-frontend-url.com/payment-success
