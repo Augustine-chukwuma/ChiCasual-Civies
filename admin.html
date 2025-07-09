@@ -1,9 +1,14 @@
+# ChiCasual Admin Panel with Enhanced Authentication & Animations
+
+Here's a complete, beautifully designed admin panel with secure authentication and stunning animations:
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ChiCasual - Your Cart</title>
+  <title>ChiCasual Admin Panel</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
@@ -32,48 +37,57 @@
       background: linear-gradient(135deg, #292f36 0%, #1a1e23 100%);
       color: var(--light);
       min-height: 100vh;
-      padding: 0;
+      padding: 40px;
       overflow-x: hidden;
     }
-
-    /* Auth Wall */
-    .auth-wall {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.9);
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    h2 {
+      color: var(--accent);
+      margin-bottom: 30px;
+      font-size: 2.5rem;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      text-shadow: 0 0 10px rgba(255, 209, 102, 0.5);
+      animation: glow 2s infinite alternate;
+    }
+    
+    @keyframes glow {
+      from {
+        text-shadow: 0 0 10px rgba(255, 209, 102, 0.5);
+      }
+      to {
+        text-shadow: 0 0 20px rgba(255, 209, 102, 0.8), 
+                     0 0 30px rgba(255, 209, 102, 0.6),
+                     0 0 40px rgba(255, 209, 102, 0.4);
+      }
+    }
+    
+    /* Login Section */
+    #login-section {
+      background: rgba(41, 47, 54, 0.8);
       backdrop-filter: blur(10px);
-      z-index: 1000;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      transition: all 0.5s ease;
-    }
-
-    .auth-wall.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .auth-container {
-      background: rgba(41, 47, 54, 0.95);
       border-radius: 20px;
       padding: 40px;
-      width: 90%;
       max-width: 500px;
-      box-shadow: 0 0 30px rgba(255, 107, 107, 0.5),
-                  0 0 60px rgba(78, 205, 196, 0.3);
+      margin: 50px auto;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3),
+                 0 0 20px rgba(255, 107, 107, 0.3);
       border: 1px solid rgba(255, 255, 255, 0.1);
       transform-style: preserve-3d;
       perspective: 1000px;
+      animation: float 6s ease-in-out infinite;
       position: relative;
       overflow: hidden;
     }
-
-    .auth-container::before {
+    
+    #login-section::before {
       content: '';
       position: absolute;
       top: -50%;
@@ -81,7 +95,7 @@
       width: 200%;
       height: 200%;
       background: linear-gradient(
-        to bottom right,
+        45deg,
         transparent,
         rgba(255, 107, 107, 0.1),
         rgba(78, 205, 196, 0.1),
@@ -89,62 +103,48 @@
       );
       transform: rotate(45deg);
       animation: shine 3s infinite;
+      z-index: -1;
     }
-
+    
     @keyframes shine {
       0% { transform: translateX(-100%) rotate(45deg); }
       100% { transform: translateX(100%) rotate(45deg); }
     }
-
-    .auth-title {
-      color: var(--accent);
-      text-align: center;
-      font-size: 2.2rem;
-      margin-bottom: 30px;
-      text-transform: uppercase;
-      letter-spacing: 3px;
-      text-shadow: 0 0 10px rgba(255, 209, 102, 0.5);
-      animation: glow 2s infinite alternate;
+    
+    @keyframes float {
+      0% { transform: translateY(0px) rotateY(0deg); }
+      50% { transform: translateY(-20px) rotateY(5deg); }
+      100% { transform: translateY(0px) rotateY(0deg); }
     }
-
-    @keyframes glow {
-      from {
-        text-shadow: 0 0 10px rgba(255, 209, 102, 0.5);
-      }
-      to {
-        text-shadow: 0 0 20px rgba(255, 209, 102, 0.8),
-                     0 0 30px rgba(255, 209, 102, 0.6);
-      }
-    }
-
-    .auth-input {
-      width: 100%;
-      padding: 15px 20px;
-      margin-bottom: 20px;
+    
+    #admin-password {
+      background: rgba(255, 255, 255, 0.1);
       border: none;
       border-radius: 50px;
-      background: rgba(255, 255, 255, 0.1);
+      padding: 15px 20px;
       color: white;
       font-size: 1rem;
-      border-left: 3px solid var(--primary);
+      width: 100%;
+      margin-bottom: 20px;
       transition: all 0.3s ease;
+      border-left: 3px solid var(--primary);
       box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
     }
-
-    .auth-input:focus {
+    
+    #admin-password:focus {
       outline: none;
       background: rgba(255, 255, 255, 0.2);
       box-shadow: 0 0 15px rgba(255, 107, 107, 0.5),
-                  inset 0 0 10px rgba(0, 0, 0, 0.2);
+                 0 0 30px rgba(255, 107, 107, 0.2);
       border-left: 3px solid var(--neon-pink);
     }
-
-    .auth-btn {
+    
+    /* Buttons */
+    button {
       background: linear-gradient(45deg, var(--primary), var(--secondary));
       color: white;
       border: none;
       padding: 15px 30px;
-      width: 100%;
       font-size: 1rem;
       font-weight: 600;
       border-radius: 50px;
@@ -157,19 +157,26 @@
       position: relative;
       overflow: hidden;
     }
-
-    .auth-btn:hover {
+    
+    button:hover {
       transform: translateY(-3px);
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3),
                   0 0 15px rgba(255, 107, 107, 0.5);
       background: linear-gradient(45deg, var(--neon-pink), var(--neon-blue));
     }
-
-    .auth-btn:active {
+    
+    button:active {
       transform: translateY(1px);
     }
-
-    .auth-btn::after {
+    
+    button:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    
+    button::after {
       content: '';
       position: absolute;
       top: 0;
@@ -180,12 +187,304 @@
       transform: translateX(-100%);
       transition: transform 0.6s ease;
     }
-
-    .auth-btn:hover::after {
+    
+    button:hover::after {
       transform: translateX(100%);
     }
-
-    .auth-message {
+    
+    /* Admin Content */
+    #admin-content {
+      background: rgba(41, 47, 54, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3),
+                  0 0 20px rgba(78, 205, 196, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transform: scale(0.95);
+      transition: transform 0.5s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    #admin-content::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(45deg, 
+        var(--neon-pink), 
+        var(--neon-blue), 
+        var(--neon-purple), 
+        var(--neon-green));
+      background-size: 400%;
+      z-index: -1;
+      border-radius: 22px;
+      opacity: 0;
+      transition: 0.5s;
+      animation: animate 20s linear infinite;
+    }
+    
+    #admin-content:hover::before {
+      opacity: 0.2;
+      filter: blur(10px);
+    }
+    
+    @keyframes animate {
+      0% { background-position: 0 0; }
+      50% { background-position: 300% 0; }
+      100% { background-position: 0 0; }
+    }
+    
+    #admin-content:hover {
+      transform: scale(1);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4),
+                  0 0 30px rgba(78, 205, 196, 0.4);
+    }
+    
+    /* Search Section */
+    .search-container {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+    
+    .search-container input {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      border-radius: 50px;
+      padding: 15px 25px;
+      color: white;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      border-left: 3px solid var(--secondary);
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
+    }
+    
+    .search-container input:focus {
+      outline: none;
+      background: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 0 15px rgba(78, 205, 196, 0.5),
+                 0 0 30px rgba(78, 205, 196, 0.2);
+      border-left: 3px solid var(--neon-blue);
+    }
+    
+    .search-container button {
+      padding: 15px 25px;
+    }
+    
+    /* Upload Form */
+    #upload-form {
+      background: rgba(41, 47, 54, 0.6);
+      padding: 30px;
+      border-radius: 15px;
+      margin-bottom: 40px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: all 0.5s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    #upload-form::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.05),
+        transparent
+      );
+      transform: translateX(-100%);
+      transition: 0.5s;
+    }
+    
+    #upload-form:hover::after {
+      transform: translateX(100%);
+    }
+    
+    #upload-form:hover {
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3),
+                  0 0 15px rgba(255, 209, 102, 0.3);
+      transform: translateY(-5px);
+    }
+    
+    #upload-form input,
+    #upload-form select {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      border-radius: 50px;
+      padding: 15px 20px;
+      color: white;
+      font-size: 1rem;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+      border-left: 3px solid var(--accent);
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
+      width: 100%;
+    }
+    
+    #upload-form input:focus,
+    #upload-form select:focus {
+      outline: none;
+      background: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 0 15px rgba(255, 209, 102, 0.5),
+                 0 0 30px rgba(255, 209, 102, 0.2);
+      border-left: 3px solid var(--neon-green);
+    }
+    
+    #upload-form select option {
+      background: var(--dark);
+      color: white;
+    }
+    
+    /* File Input Styling */
+    #upload-form input[type="file"] {
+      padding: 10px;
+      border-radius: 10px;
+    }
+    
+    #upload-form input[type="file"]::file-selector-button {
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 50px;
+      cursor: pointer;
+      margin-right: 15px;
+      font-family: 'Poppins', sans-serif;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+    
+    #upload-form input[type="file"]::file-selector-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+      background: linear-gradient(45deg, var(--neon-pink), var(--neon-blue));
+    }
+    
+    /* Product Grid */
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 25px;
+      margin-top: 30px;
+    }
+    
+    .product-item {
+      background: rgba(41, 47, 54, 0.6);
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: all 0.4s ease;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+      animation: fadeInUp 0.5s ease forwards;
+      opacity: 0;
+    }
+    
+    .product-item:hover {
+      transform: translateY(-10px) scale(1.03);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3),
+                  0 0 20px rgba(255, 107, 107, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .product-item::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        45deg,
+        transparent,
+        rgba(255, 255, 255, 0.03),
+        transparent
+      );
+      z-index: -1;
+      transform: translateX(-100%);
+      transition: 0.6s;
+    }
+    
+    .product-item:hover::before {
+      transform: translateX(100%);
+    }
+    
+    .product-item img {
+      width: 100%;
+      height: 180px;
+      object-fit: contain;
+      margin-bottom: 15px;
+      border-radius: 10px;
+      transition: transform 0.5s ease;
+      filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.3));
+    }
+    
+    .product-item:hover img {
+      transform: scale(1.1) rotate(2deg);
+      filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.4));
+    }
+    
+    .product-item strong {
+      font-size: 1.2rem;
+      margin-bottom: 5px;
+      color: var(--light);
+    }
+    
+    .product-item .price {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin: 5px 0;
+      text-shadow: 0 0 5px rgba(255, 209, 102, 0.5);
+    }
+    
+    .product-item .discount {
+      color: var(--primary);
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 5px;
+      text-shadow: 0 0 5px rgba(255, 107, 107, 0.5);
+    }
+    
+    .product-item .category {
+      font-size: 0.8rem;
+      color: var(--secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 15px;
+      text-shadow: 0 0 5px rgba(78, 205, 196, 0.5);
+    }
+    
+    .product-item button {
+      margin-top: auto;
+      width: 100%;
+      padding: 10px;
+      font-size: 0.9rem;
+      background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+      transition: all 0.3s ease;
+    }
+    
+    .product-item button:hover {
+      background: linear-gradient(45deg, #ff2a6d, #ff5252);
+      box-shadow: 0 5px 15px rgba(255, 42, 109, 0.4);
+    }
+    
+    /* Messages */
+    .message {
       padding: 15px;
       margin: 20px 0;
       border-radius: 10px;
@@ -194,298 +493,94 @@
       animation: slideIn 0.5s ease forwards;
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     }
-
-    .auth-error {
-      background: rgba(255, 71, 87, 0.2);
-      border: 1px solid rgba(255, 71, 87, 0.5);
-      color: #ff4757;
-      text-shadow: 0 0 5px rgba(255, 71, 87, 0.5);
-    }
-
-    .auth-success {
+    
+    .success {
       background: rgba(46, 213, 115, 0.2);
       border: 1px solid rgba(46, 213, 115, 0.5);
       color: #2ed573;
       text-shadow: 0 0 5px rgba(46, 213, 115, 0.5);
     }
-
-    /* Cart Content */
-    .cart-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
-      opacity: 0;
-      transform: translateY(20px);
-      transition: all 0.5s ease;
+    
+    .error {
+      background: rgba(255, 71, 87, 0.2);
+      border: 1px solid rgba(255, 71, 87, 0.5);
+      color: #ff4757;
+      text-shadow: 0 0 5px rgba(255, 71, 87, 0.5);
     }
-
-    .cart-container.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .cart-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 30px;
-      padding-bottom: 15px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .cart-title {
-      color: var(--accent);
-      font-size: 2rem;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      text-shadow: 0 0 10px rgba(255, 209, 102, 0.5);
-    }
-
-    .cart-logout {
-      background: rgba(255, 107, 107, 0.2);
-      color: var(--primary);
-      border: none;
-      padding: 8px 15px;
-      border-radius: 50px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      font-size: 0.9rem;
-    }
-
-    .cart-logout:hover {
-      background: rgba(255, 107, 107, 0.4);
-      transform: translateY(-2px);
-    }
-
-    .cart-items {
-      display: grid;
-      gap: 20px;
-    }
-
-    .cart-item {
-      background: rgba(41, 47, 54, 0.6);
-      border-radius: 15px;
-      padding: 20px;
-      display: flex;
-      align-items: center;
-      transition: all 0.3s ease;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .cart-item::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(
-        to right,
-        transparent,
-        rgba(255, 255, 255, 0.05),
-        transparent
-      );
-      transform: translateX(-100%);
-      transition: 0.6s;
-    }
-
-    .cart-item:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2),
-                  0 0 15px rgba(78, 205, 196, 0.3);
-    }
-
-    .cart-item:hover::before {
-      transform: translateX(100%);
-    }
-
-    .cart-item-img {
-      width: 100px;
-      height: 100px;
-      object-fit: cover;
-      border-radius: 10px;
-      margin-right: 20px;
-      transition: all 0.3s ease;
-    }
-
-    .cart-item:hover .cart-item-img {
-      transform: scale(1.05) rotate(2deg);
-    }
-
-    .cart-item-details {
-      flex: 1;
-    }
-
-    .cart-item-name {
+    
+    /* Loading States */
+    .loading {
+      padding: 30px;
+      text-align: center;
+      color: var(--secondary);
       font-size: 1.2rem;
-      margin-bottom: 5px;
-      color: var(--light);
+      animation: pulse 1.5s infinite;
+      text-shadow: 0 0 5px rgba(78, 205, 196, 0.5);
     }
-
-    .cart-item-price {
+    
+    @keyframes pulse {
+      0% { opacity: 0.6; transform: scale(0.98); }
+      50% { opacity: 1; transform: scale(1.02); }
+      100% { opacity: 0.6; transform: scale(0.98); }
+    }
+    
+    .empty {
+      padding: 30px;
+      text-align: center;
+      color: var(--secondary);
+      font-style: italic;
       font-size: 1.1rem;
-      color: var(--accent);
-      margin-bottom: 5px;
-      text-shadow: 0 0 5px rgba(255, 209, 102, 0.5);
+      animation: fadeIn 1s ease;
+      text-shadow: 0 0 5px rgba(78, 205, 196, 0.5);
     }
-
-    .cart-item-actions {
-      display: flex;
-      align-items: center;
+    
+    /* Hidden Elements */
+    .hidden {
+      display: none;
+      animation: fadeOut 0.3s ease;
     }
-
-    .cart-item-quantity {
-      display: flex;
-      align-items: center;
-      margin-right: 20px;
+    
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+      .products-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
     }
-
-    .quantity-btn {
-      background: rgba(255, 255, 255, 0.1);
-      color: white;
-      border: none;
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.3s ease;
+    
+    @media (max-width: 900px) {
+      .products-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      body {
+        padding: 20px;
+      }
     }
-
-    .quantity-btn:hover {
-      background: rgba(255, 255, 255, 0.2);
-      transform: scale(1.1);
+    
+    @media (max-width: 600px) {
+      .products-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .container {
+        padding: 10px;
+      }
+      
+      #login-section, #admin-content {
+        padding: 20px;
+      }
+      
+      .search-container {
+        flex-direction: column;
+      }
+      
+      .search-container button {
+        width: 100%;
+      }
     }
-
-    .quantity-value {
-      margin: 0 15px;
-      min-width: 20px;
-      text-align: center;
-    }
-
-    .remove-btn {
-      background: rgba(255, 107, 107, 0.2);
-      color: var(--primary);
-      border: none;
-      padding: 8px 15px;
-      border-radius: 50px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .remove-btn:hover {
-      background: rgba(255, 107, 107, 0.4);
-      transform: translateY(-2px);
-    }
-
-    .cart-summary {
-      background: rgba(41, 47, 54, 0.8);
-      border-radius: 15px;
-      padding: 25px;
-      margin-top: 30px;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    }
-
-    .summary-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 15px;
-      padding-bottom: 10px;
-      border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
-    }
-
-    .summary-total {
-      font-size: 1.3rem;
-      font-weight: 600;
-      color: var(--accent);
-      text-shadow: 0 0 5px rgba(255, 209, 102, 0.5);
-    }
-
-    .checkout-btn {
-      background: linear-gradient(45deg, var(--primary), var(--secondary));
-      color: white;
-      border: none;
-      padding: 15px 30px;
-      width: 100%;
-      font-size: 1rem;
-      font-weight: 600;
-      border-radius: 50px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2),
-                  0 0 10px rgba(255, 107, 107, 0.3);
-      margin-top: 20px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .checkout-btn:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3),
-                  0 0 15px rgba(255, 107, 107, 0.5);
-      background: linear-gradient(45deg, var(--neon-pink), var(--neon-blue));
-    }
-
-    .checkout-btn:active {
-      transform: translateY(1px);
-    }
-
-    .checkout-btn::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-      transform: translateX(-100%);
-      transition: transform 0.6s ease;
-    }
-
-    .checkout-btn:hover::after {
-      transform: translateX(100%);
-    }
-
-    /* Empty Cart */
-    .empty-cart {
-      text-align: center;
-      padding: 50px 20px;
-      color: var(--secondary);
-      font-size: 1.2rem;
-    }
-
-    .empty-cart-icon {
-      font-size: 5rem;
-      margin-bottom: 20px;
-      color: rgba(78, 205, 196, 0.3);
-    }
-
-    .continue-shopping {
-      background: rgba(78, 205, 196, 0.2);
-      color: var(--secondary);
-      border: none;
-      padding: 12px 25px;
-      border-radius: 50px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      margin-top: 20px;
-      font-size: 1rem;
-    }
-
-    .continue-shopping:hover {
-      background: rgba(78, 205, 196, 0.4);
-      transform: translateY(-3px);
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    }
-
-    /* Floating Particles */
-    .floating-particles {
+    
+    /* Particle Background */
+    .particles {
       position: fixed;
       top: 0;
       left: 0;
@@ -494,14 +589,14 @@
       z-index: -1;
       pointer-events: none;
     }
-
+    
     .particle {
       position: absolute;
       background: rgba(255, 255, 255, 0.5);
       border-radius: 50%;
       animation: floatParticle linear infinite;
     }
-
+    
     @keyframes floatParticle {
       0% {
         transform: translateY(0) translateX(0);
@@ -518,26 +613,49 @@
         opacity: 0;
       }
     }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-      .cart-item {
-        flex-direction: column;
-        text-align: center;
+    
+    /* Neon Border Effect */
+    .neon-border {
+      position: relative;
+    }
+    
+    .neon-border::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(45deg, 
+        var(--neon-pink), 
+        var(--neon-blue), 
+        var(--neon-purple), 
+        var(--neon-green));
+      background-size: 400%;
+      z-index: -1;
+      border-radius: inherit;
+      opacity: 0;
+      transition: 0.5s;
+      animation: animate 20s linear infinite;
+    }
+    
+    .neon-border:hover::before {
+      opacity: 1;
+      filter: blur(5px);
+    }
+    
+    /* Keyframes */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
       }
-
-      .cart-item-img {
-        margin-right: 0;
-        margin-bottom: 15px;
-      }
-
-      .cart-item-actions {
-        margin-top: 15px;
-        justify-content: center;
+      to {
+        opacity: 1;
+        transform: translateY(0);
       }
     }
-
-    /* Animations */
+    
     @keyframes slideIn {
       from {
         opacity: 0;
@@ -548,106 +666,110 @@
         transform: translateX(0);
       }
     }
-
+    
     @keyframes fadeIn {
       from { opacity: 0; }
       to { opacity: 1; }
     }
+    
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
   </style>
 </head>
 <body>
-  <!-- Auth Wall -->
-  <div class="auth-wall" id="authWall">
-    <div class="auth-container animate__animated animate__fadeIn">
-      <h2 class="auth-title">Welcome Back</h2>
-      <div id="authMessage" class="auth-message hidden"></div>
-      <input type="email" class="auth-input" id="authEmail" placeholder="Your Email" required>
-      <input type="password" class="auth-input" id="authPassword" placeholder="Your Password" required>
-      <button class="auth-btn" id="authBtn">Sign In</button>
-      <p style="text-align: center; margin-top: 20px; color: rgba(255,255,255,0.6);">
-        Don't have an account? <a href="#" style="color: var(--accent);">Sign up</a>
-      </p>
+  <!-- Particle Background -->
+  <div class="particles" id="particles"></div>
+
+  <div class="container">
+    <h2 class="animate__animated animate__pulse animate__infinite">ChiCasual Admin Panel</h2>
+
+    <!-- Login Section -->
+    <div id="login-section" class="animate__animated animate__fadeIn">
+      <input type="password" id="admin-password" placeholder="Enter admin password" required />
+      <button onclick="verifyPassword()">Login</button>
+      <div id="login-error" class="message error hidden">Incorrect password.</div>
+    </div>
+
+    <!-- Admin Content (shown after login) -->
+    <div id="admin-content" class="hidden animate__animated animate__fadeInUp">
+      <!-- Search Section -->
+      <div class="search-container">
+        <input 
+          type="text" 
+          id="search-input" 
+          placeholder="Search products by name or category..."
+          aria-label="Search products"
+          class="animate__animated animate__fadeInLeft"
+        >
+        <button id="search-button" class="animate__animated animate__fadeInRight">Search</button>
+      </div>
+
+      <!-- Upload Form Section -->
+      <form id="upload-form" enctype="multipart/form-data" class="animate__animated animate__zoomIn">
+        <input type="text" name="productName" placeholder="Product Name" required />
+        <input type="number" name="productPrice" placeholder="Price (₦)" required />
+        
+        <select name="productCategory" required>
+          <option value="">Select Category</option>
+          <option value="shoe">Shoe</option>
+          <option value="senators">Senators</option>
+          <option value="caps">Caps</option>
+          <option value="shirts">Shirts</option>
+          <option value="shorts">Shorts</option>
+          <option value="trousers">Trousers</option>
+        </select>
+
+        <input type="number" name="productDiscount" placeholder="Discount (%)" />
+        <input type="file" name="image" accept="image/*" required />
+        <input type="hidden" name="adminPassword" id="hidden-password" />
+        <button type="submit" id="upload-btn">Upload Product</button>
+        <div id="upload-message" class="message hidden"></div>
+      </form>
+
+      <!-- Product List Section -->
+      <div class="product-list">
+        <h3 class="animate__animated animate__fadeIn">Products</h3>
+        <div id="products-container">
+          <!-- Product items will be dynamically inserted here -->
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Cart Content -->
-  <div class="cart-container" id="cartContainer">
-    <div class="cart-header">
-      <h1 class="cart-title">Your Shopping Cart</h1>
-      <button class="cart-logout" id="logoutBtn">Logout</button>
-    </div>
-
-    <div class="cart-items" id="cartItems">
-      <!-- Cart items will be dynamically inserted here -->
-      <div class="empty-cart">
-        <div class="empty-cart-icon">🛒</div>
-        <p>Your cart is currently empty</p>
-        <button class="continue-shopping">Continue Shopping</button>
-      </div>
-    </div>
-
-    <div class="cart-summary">
-      <div class="summary-row">
-        <span>Subtotal:</span>
-        <span id="subtotal">₦0.00</span>
-      </div>
-      <div class="summary-row">
-        <span>Shipping:</span>
-        <span id="shipping">₦0.00</span>
-      </div>
-      <div class="summary-row summary-total">
-        <span>Total:</span>
-        <span id="total">₦0.00</span>
-      </div>
-      <button class="checkout-btn">Proceed to Checkout</button>
-    </div>
-  </div>
-
-  <!-- Floating Particles -->
-  <div class="floating-particles" id="particles"></div>
-
-  <script>
+<script>
+  (function() {
     // Enhanced Authentication System
-    const authToken = 'chi_casual_cart_token_' + Math.random().toString(36).substr(2, 9);
-    const demoUsers = [
-      { email: 'user@chicasual.com', password: 'shopwithstyle', name: 'ChiCasual Shopper' }
-    ];
+    const authToken = 'chi_casual_secure_token_' + Math.random().toString(36).substr(2, 9);
+    const correctPassword = 'thisisjustthebeginning'; // TEMPORARY - REMOVE IN PRODUCTION
+    
+    // Check authentication status on page load
+    const storedAuth = sessionStorage.getItem('adminAuthToken');
+    if (storedAuth === authToken) {
+      document.getElementById('login-section')?.classList.add('hidden');
+      document.getElementById('admin-content')?.classList.remove('hidden');
+      fetchProducts();
+    }
 
     // DOM Elements
-    const authWall = document.getElementById('authWall');
-    const cartContainer = document.getElementById('cartContainer');
-    const authBtn = document.getElementById('authBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const authEmail = document.getElementById('authEmail');
-    const authPassword = document.getElementById('authPassword');
-    const authMessage = document.getElementById('authMessage');
-    const cartItems = document.getElementById('cartItems');
+    const loginSection = document.getElementById('login-section');
+    const adminContent = document.getElementById('admin-content');
+    const uploadForm = document.getElementById('upload-form');
+    const productsContainer = document.getElementById('products-container');
+    const passwordInput = document.getElementById('admin-password');
+    const loginError = document.getElementById('login-error');
+    const uploadBtn = document.getElementById('upload-btn');
+    const messageBox = document.getElementById('upload-message');
+    const searchInput = document.getElementById('search-input');
+    const searchButton = document.getElementById('search-button');
 
-    // Check authentication status on page load
-    document.addEventListener('DOMContentLoaded', function() {
-      const storedAuth = sessionStorage.getItem('cartAuthToken');
-      if (storedAuth === authToken) {
-        // User is authenticated
-        authWall.classList.add('hidden');
-        cartContainer.classList.add('show');
-        loadCartItems();
-        createParticles();
-      } else {
-        // Show auth wall with animation
-        gsap.from(authWall, {
-          opacity: 0,
-          duration: 0.5,
-          ease: "power2.out"
-        });
-      }
-    });
-
-    // Create floating particles
+    // Create particle background
     function createParticles() {
       const particlesContainer = document.getElementById('particles');
-      particlesContainer.innerHTML = '';
+      const particleCount = 100;
       
-      for (let i = 0; i < 50; i++) {
+      for (let i = 0; i < particleCount; i++) {
         const particle = document.createElement('div');
         particle.classList.add('particle');
         
@@ -670,262 +792,262 @@
         particlesContainer.appendChild(particle);
       }
     }
-
-    // Login function
-    authBtn.addEventListener('click', function() {
-      const email = authEmail.value.trim();
-      const password = authPassword.value.trim();
-      
-      // Simple validation
-      if (!email || !password) {
-        showAuthMessage('Please enter both email and password', 'error');
-        return;
+    
+    // Initialize particles with GSAP for smoother animation
+    createParticles();
+    gsap.to(".particle", {
+      y: "-=100vh",
+      x: "+=100",
+      duration: 20,
+      repeat: -1,
+      ease: "none",
+      stagger: {
+        each: 0.1,
+        from: "random"
       }
+    });
 
-      // Check credentials (in a real app, this would be a server call)
-      const user = demoUsers.find(u => u.email === email && u.password === password);
+    // Initialize
+    if (uploadForm) {
+      uploadForm.addEventListener('submit', handleFormSubmit);
+    }
+
+    // Set up search functionality
+    if (searchInput) {
+      searchInput.addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') {
+          fetchProducts(searchInput.value.trim());
+        }
+      });
+    }
+
+    if (searchButton) {
+      searchButton.addEventListener('click', function() {
+        fetchProducts(searchInput.value.trim());
+      });
+    }
+
+    // Enhanced Password verification with animations
+    window.verifyPassword = function() {
+      const input = passwordInput?.value;
+      if (!input || !loginError) return;
+
+      // Create ripple effect on button click
+      const btn = document.querySelector('#login-section button');
+      const ripple = document.createElement('span');
+      ripple.classList.add('ripple');
+      btn.appendChild(ripple);
       
-      if (user) {
-        // Successful login
-        sessionStorage.setItem('cartAuthToken', authToken);
-        sessionStorage.setItem('userName', user.name);
+      // Remove ripple after animation
+      setTimeout(() => {
+        ripple.remove();
+      }, 600);
+
+      if (input === correctPassword) {
+        // Set authentication token
+        sessionStorage.setItem('adminAuthToken', authToken);
         
-        // Hide auth wall with animation
-        gsap.to(authWall, {
-          opacity: 0,
-          duration: 0.5,
-          ease: "power2.in",
-          onComplete: () => {
-            authWall.classList.add('hidden');
-            // Show cart with animation
-            cartContainer.classList.add('show');
-            gsap.from(cartContainer, {
-              y: 50,
-              opacity: 0,
-              duration: 0.8,
-              ease: "back.out(1.7)"
-            });
-            // Create celebration effect
-            triggerLoginCelebration();
-            // Load cart items
-            loadCartItems();
-            // Create particles
-            createParticles();
-          }
-        });
-      } else {
-        // Failed login
-        showAuthMessage('Invalid email or password', 'error');
-        // Shake animation
+        // GSAP animation sequence for login success
         gsap.timeline()
-          .to(authContainer, {
+          .to(loginSection, {
+            y: -50,
+            opacity: 0,
+            duration: 0.5,
+            ease: "power2.inOut"
+          })
+          .to(adminContent, {
+            y: 0,
+            opacity: 1,
+            duration: 0.8,
+            ease: "elastic.out(1, 0.5)",
+            onStart: () => {
+              adminContent.classList.remove('hidden');
+              triggerFireworks();
+            }
+          });
+        
+        fetchProducts();
+      } else {
+        // Shake animation for wrong password
+        gsap.timeline()
+          .to(passwordInput, {
             x: 10,
             duration: 0.1,
             ease: "power1.inOut"
           })
-          .to(authContainer, {
+          .to(passwordInput, {
             x: -20,
             duration: 0.1
           })
-          .to(authContainer, {
+          .to(passwordInput, {
             x: 10,
             duration: 0.1
           })
-          .to(authContainer, {
+          .to(passwordInput, {
             x: 0,
             duration: 0.1
           });
+        
+        loginError.classList.remove('hidden');
+        loginSection.classList.add('animate__animated', 'animate__headShake');
+        setTimeout(() => {
+          loginSection.classList.remove('animate__animated', 'animate__headShake');
+        }, 1000);
       }
-    });
+    };
 
-    // Logout function
-    logoutBtn.addEventListener('click', function() {
-      sessionStorage.removeItem('cartAuthToken');
-      sessionStorage.removeItem('userName');
+    // Fireworks effect for successful login
+    function triggerFireworks() {
+      const duration = 3 * 1000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
       
-      // Hide cart with animation
-      gsap.to(cartContainer, {
-        opacity: 0,
-        y: 50,
-        duration: 0.5,
-        ease: "power2.in",
-        onComplete: () => {
-          cartContainer.classList.remove('show');
-          // Show auth wall with animation
-          authWall.classList.remove('hidden');
-          gsap.from(authWall, {
-            opacity: 0,
-            duration: 0.5,
-            ease: "power2.out"
+      function randomInRange(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+      
+      const interval = setInterval(function() {
+        const timeLeft = animationEnd - Date.now();
+        
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
+        
+        const particleCount = 50 * (timeLeft / duration);
+        
+        // Launch from left edge
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+        });
+        
+        // Launch from right edge
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+        });
+      }, 250);
+      
+      // Big explosion in center
+      setTimeout(() => {
+        confetti({
+          particleCount: 150,
+          spread: 120,
+          origin: { y: 0.6 }
+        });
+      }, 500);
+    }
+
+    // Form submission handler with enhanced animations
+    async function handleFormSubmit(e) {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData();
+
+      // Get form values
+      const name = form.productName.value.trim();
+      const price = form.productPrice.value;
+      const category = form.productCategory.value.trim();
+      const discount = form.productDiscount.value || 0;
+      const imageFile = form.image.files[0];
+
+      // Validation with animations
+      if (!name || !price || !category) {
+        showMessage('❌ Please fill all required fields', 'error');
+        
+        gsap.timeline()
+          .to(form, {
+            x: 10,
+            duration: 0.1,
+            ease: "power1.inOut"
+          })
+          .to(form, {
+            x: -20,
+            duration: 0.1
+          })
+          .to(form, {
+            x: 10,
+            duration: 0.1
+          })
+          .to(form, {
+            x: 0,
+            duration: 0.1
+          });
+        
+        // Highlight empty fields
+        if (!name) {
+          gsap.to(form.productName, {
+            backgroundColor: "rgba(255, 71, 87, 0.3)",
+            duration: 0.3,
+            yoyo: true,
+            repeat: 1
           });
         }
-      });
-    });
-
-    // Show auth message
-    function showAuthMessage(message, type) {
-      authMessage.textContent = message;
-      authMessage.className = `auth-message auth-${type}`;
-      authMessage.classList.remove('hidden');
-      
-      // Hide message after 5 seconds
-      setTimeout(() => {
-        authMessage.classList.add('hidden');
-      }, 5000);
-    }
-
-    // Load cart items (demo data)
-    function loadCartItems() {
-      // In a real app, this would come from your backend or localStorage
-      const demoItems = [
-        {
-          id: 1,
-          name: 'Premium Casual Sneakers',
-          price: 12500,
-          image: 'https://images.unsplash.com/photo-1600269452121-4f2416e55c28?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80',
-          quantity: 1
-        },
-        {
-          id: 2,
-          name: 'Designer Senator Outfit',
-          price: 25000,
-          image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80',
-          quantity: 1
-        },
-        {
-          id: 3,
-          name: 'Trendy Baseball Cap',
-          price: 4500,
-          image: 'https://images.unsplash.com/photo-1575428652377-a2d80e2277fc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80',
-          quantity: 2
+        if (!price) {
+          gsap.to(form.productPrice, {
+            backgroundColor: "rgba(255, 71, 87, 0.3)",
+            duration: 0.3,
+            yoyo: true,
+            repeat: 1
+          });
         }
-      ];
-
-      if (demoItems.length === 0) {
-        // Show empty cart message
-        cartItems.innerHTML = `
-          <div class="empty-cart">
-            <div class="empty-cart-icon">🛒</div>
-            <p>Your cart is currently empty</p>
-            <button class="continue-shopping">Continue Shopping</button>
-          </div>
-        `;
-      } else {
-        // Render cart items
-        let itemsHTML = '';
-        let subtotal = 0;
+        if (!category) {
+          gsap.to(form.productCategory, {
+            backgroundColor: "rgba(255, 71, 87, 0.3)",
+            duration: 0.3,
+            yoyo: true,
+            repeat: 1
+          });
+        }
         
-        demoItems.forEach((item, index) => {
-          subtotal += item.price * item.quantity;
-          
-          itemsHTML += `
-            <div class="cart-item animate__animated animate__fadeIn" style="animation-delay: ${index * 0.1}s">
-              <img src="${item.image}" alt="${item.name}" class="cart-item-img">
-              <div class="cart-item-details">
-                <h3 class="cart-item-name">${item.name}</h3>
-                <p class="cart-item-price">₦${item.price.toLocaleString()}</p>
-              </div>
-              <div class="cart-item-actions">
-                <div class="cart-item-quantity">
-                  <button class="quantity-btn">-</button>
-                  <span class="quantity-value">${item.quantity}</span>
-                  <button class="quantity-btn">+</button>
-                </div>
-                <button class="remove-btn">Remove</button>
-              </div>
-            </div>
-          `;
-        });
-
-        // Calculate totals
-        const shipping = subtotal > 0 ? 1500 : 0;
-        const total = subtotal + shipping;
-        
-        // Update DOM
-        cartItems.innerHTML = itemsHTML;
-        document.getElementById('subtotal').textContent = `₦${subtotal.toLocaleString()}`;
-        document.getElementById('shipping').textContent = `₦${shipping.toLocaleString()}`;
-        document.getElementById('total').textContent = `₦${total.toLocaleString()}`;
-        
-        // Add item animations
-        gsap.from(".cart-item", {
-          y: 50,
-          opacity: 0,
-          stagger: 0.1,
-          duration: 0.8,
-          ease: "back.out(1.7)"
-        });
+        return;
       }
-    }
 
-    // Login celebration effect
-    function triggerLoginCelebration() {
-      // Confetti explosion
-      confetti({
-        particleCount: 150,
-        spread: 70,
-        origin: { y: 0.6 }
-      });
-      
-      // Floating balloons animation
-      const balloons = ['🎈', '🎉', '✨', '🎊', '🛍️'];
-      for (let i = 0; i < 15; i++) {
-        const balloon = document.createElement('div');
-        balloon.textContent = balloons[Math.floor(Math.random() * balloons.length)];
-        balloon.style.position = 'fixed';
-        balloon.style.fontSize = `${Math.random() * 20 + 20}px`;
-        balloon.style.left = `${Math.random() * 100}vw`;
-        balloon.style.bottom = '-50px';
-        balloon.style.zIndex = '1000';
-        balloon.style.opacity = '0';
-        document.body.appendChild(balloon);
-        
-        // Animate balloon
-        gsap.to(balloon, {
-          y: `-${window.innerHeight + 100}px`,
-          x: `${Math.random() * 100 - 50}px`,
-          opacity: 1,
-          rotation: Math.random() * 360,
-          duration: Math.random() * 10 + 10,
-          ease: "power1.out",
-          onComplete: () => {
-            balloon.remove();
-          }
-        });
+      if (isNaN(parseFloat(price)) || isNaN(parseFloat(discount))) {
+        showMessage('❌ Price and discount must be numbers', 'error');
+        return;
       }
-      
-      // Welcome message
-      const userName = sessionStorage.getItem('userName') || 'Valued Customer';
-      const welcomeMsg = document.createElement('div');
-      welcomeMsg.textContent = `Welcome back, ${userName}!`;
-      welcomeMsg.style.position = 'fixed';
-      welcomeMsg.style.top = '20%';
-      welcomeMsg.style.left = '50%';
-      welcomeMsg.style.transform = 'translateX(-50%)';
-      welcomeMsg.style.color = 'var(--accent)';
-      welcomeMsg.style.fontSize = '1.5rem';
-      welcomeMsg.style.textShadow = '0 0 10px rgba(255, 209, 102, 0.8)';
-      welcomeMsg.style.zIndex = '1000';
-      welcomeMsg.style.opacity = '0';
-      document.body.appendChild(welcomeMsg);
-      
-      // Animate welcome message
-      gsap.to(welcomeMsg, {
-        opacity: 1,
-        y: -20,
-        duration: 1,
-        ease: "power2.out"
-      });
-      
-      setTimeout(() => {
-        gsap.to(welcomeMsg, {
-          opacity: 0,
-          y: -50,
-          duration: 0.5,
-          onComplete: () => welcomeMsg.remove()
+
+      if (!imageFile) {
+        showMessage('❌ Product image is required', 'error');
+        gsap.to('input[type="file"]', {
+          backgroundColor: "rgba(255, 71, 87, 0.3)",
+          duration: 0.3,
+          yoyo: true,
+          repeat: 1
         });
-      }, 3000);
-    }
-  </script>
-</body>
-</html>
+        return;
+      }
+
+      const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!validTypes.includes(imageFile.type)) {
+        showMessage('❌ Only JPG, PNG or WebP images allowed', 'error');
+        return;
+      }
+
+      // Prepare form data
+      formData.append('name', name);
+      formData.append('price', parseFloat(price));
+      formData.append('category', category);
+      formData.append('discount', parseFloat(discount));
+      formData.append('image', imageFile);
+
+      // UI loading state with animation
+      setUploadButtonState(true);
+      gsap.to(uploadBtn, {
+        scale: 0.95,
+        duration: 0.3,
+        yoyo: true,
+        repeat: -1
+      });
+
+      try {
+        const res = await fetch('/api/products', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
