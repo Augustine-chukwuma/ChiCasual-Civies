@@ -622,7 +622,7 @@
         </div>
       `;
       
-      const res = await fetch('/api/products');
+      const res = await fetch('https://chicasual.onrender.com/api/products');
       const data = await res.json();
       allProducts = data.products || data || [];
       renderProductsByCategory(allProducts);
