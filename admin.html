@@ -1047,3 +1047,117 @@
 
         if (!res.ok) {
           const errorData = await res.json();
+               // Highlight empty fields
+      if (!name) {
+        gsap.to(form.productName, {
+          backgroundColor: "rgba(255, 71, 87, 0.3)",
+          duration: 0.3,
+          yoyo: true,
+          repeat: 1
+        });
+      }
+      if (!price) {
+        gsap.to(form.productPrice, {
+          backgroundColor: "rgba(255, 71, 87, 0.3)",
+          duration: 0.3,
+          yoyo: true,
+          repeat: 1
+        });
+      }
+      if (!category) {
+        gsap.to(form.productCategory, {
+          backgroundColor: "rgba(255, 71, 87, 0.3)",
+          duration: 0.3,
+          yoyo: true,
+          repeat: 1
+        });
+      }
+      return;
+    }
+
+    // Mock image upload for demonstration purpose
+    const imgURL = URL.createObjectURL(imageFile);
+    products.push({
+      name,
+      price,
+      category,
+      discount,
+      image: imgURL
+    });
+
+    renderProducts(products);
+    form.reset();
+    showMessage("✅ Product uploaded!", "success");
+  }
+
+  // Show message with animation
+  function showMessage(msg, type = 'success') {
+    messageBox.textContent = msg;
+    messageBox.className = `message ${type}`;
+    messageBox.classList.remove('hidden');
+    setTimeout(() => messageBox.classList.add('hidden'), 3000);
+  }
+
+  // Render products (mock for demo, can be replaced by API call)
+  function renderProducts(list = products) {
+    productsContainer.innerHTML = "";
+    if (!list.length) {
+      productsContainer.innerHTML = '<div class="empty">No products found.</div>';
+      return;
+    }
+    productsContainer.innerHTML = '<div class="products-grid"></div>';
+    const grid = productsContainer.querySelector('.products-grid');
+    list.forEach((prod, idx) => {
+      const discountText = prod.discount ? `<span class="discount">-${prod.discount}%</span>` : "";
+      const item = document.createElement('div');
+      item.className = 'product-item';
+      item.style.animationDelay = `${idx * 0.07}s`;
+      item.innerHTML = `
+        <img src="${prod.image}" alt="${prod.name}" />
+        <strong>${prod.name}</strong>
+        <div class="price">₦${prod.price}</div>
+        ${discountText}
+        <div class="category">${prod.category}</div>
+        <button class="delete-btn">Delete</button>
+      `;
+      // Simple delete button (frontend only)
+      item.querySelector('.delete-btn').onclick = () => {
+        products = products.filter(p => p !== prod);
+        renderProducts(products);
+        showMessage('Product deleted!', 'success');
+      };
+      grid.appendChild(item);
+    });
+  }
+
+  // Product search
+  function searchProducts(term) {
+    term = term.toLowerCase();
+    const filtered = products.filter(
+      p => p.name.toLowerCase().includes(term) || p.category.toLowerCase().includes(term)
+    );
+    renderProducts(filtered);
+  }
+
+  // Event listeners
+  if (uploadForm) uploadForm.addEventListener('submit', handleFormSubmit);
+  if (searchInput) {
+    searchInput.addEventListener('keyup', function(e) {
+      if (e.key === 'Enter') searchProducts(searchInput.value.trim());
+    });
+  }
+  if (searchButton) searchButton.addEventListener('click', function() {
+    searchProducts(searchInput.value.trim());
+  });
+
+  // Initial Auth Check
+  const storedAuth = sessionStorage.getItem('adminAuthToken');
+  if (storedAuth === authToken) {
+    loginSection?.classList.add('hidden');
+    adminContent?.classList.remove('hidden');
+    renderProducts(products);
+  }
+})();
+</script>
+</body>
+</html>
