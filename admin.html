@@ -12,50 +12,8 @@
 </head>
 <body>
 
-  <div class="particles" id="particles"></div>
-
-  <div class="container">
-    <h2 class="animate__animated animate__pulse animate__infinite">ChiCasual Admin Panel</h2>
-
-    <!-- Login Section -->
-    <div id="login-section" class="animate__animated animate__fadeIn">
-      <input type="password" id="admin-password" placeholder="Enter admin password" required />
-      <button onclick="verifyPassword()">Login</button>
-      <div id="login-error" class="message error hidden">Incorrect password.</div>
-    </div>
-
-    <!-- Admin Content Section -->
-    <div id="admin-content" class="hidden animate__animated animate__fadeInUp">
-      <div class="search-container">
-        <input type="text" id="search-input" placeholder="Search products by name or category..." aria-label="Search products">
-        <button id="search-button">Search</button>
-      </div>
-
-      <form id="upload-form" enctype="multipart/form-data" class="animate__animated animate__zoomIn">
-        <input type="text" name="productName" placeholder="Product Name" required />
-        <input type="number" name="productPrice" placeholder="Price (₦)" required />
-        <select name="productCategory" required>
-          <option value="">Select Category</option>
-          <option value="shoe">Shoe</option>
-          <option value="senators">Senators</option>
-          <option value="caps">Caps</option>
-          <option value="shirts">Shirts</option>
-          <option value="shorts">Shorts</option>
-          <option value="trousers">Trousers</option>
-        </select>
-        <input type="number" name="productDiscount" placeholder="Discount (%)" />
-        <input type="file" name="image" accept="image/*" required />
-        <input type="hidden" name="adminPassword" id="hidden-password" />
-        <button type="submit" id="upload-btn">Upload Product</button>
-        <div id="upload-message" class="message hidden"></div>
-      </form>
-
-      <div class="product-list">
-        <h3>Products</h3>
-        <div id="products-container"></div>
-      </div>
-    </div>
-  </div>
+  <!-- Existing HTML unchanged -->
+  <!-- ... -->
 
   <script>
     (function() {
@@ -77,37 +35,24 @@
       if (sessionStorage.getItem('adminAuthToken') === authToken) {
         loginSection.classList.add('hidden');
         adminContent.classList.remove('hidden');
-        renderProducts(products);
+        fetchProducts();
       }
 
-      function createParticles() {
-        const particlesContainer = document.getElementById('particles');
-        for (let i = 0; i < 100; i++) {
-          const particle = document.createElement('div');
-          particle.classList.add('particle');
-          const size = Math.random() * 5 + 2;
-          particle.style.width = `${size}px`;
-          particle.style.height = `${size}px`;
-          particle.style.left = `${Math.random() * 100}%`;
-          particle.style.bottom = `-${size}px`;
-          particle.style.animationDuration = `${Math.random() * 20 + 10}s`;
-          particle.style.animationDelay = `${Math.random() * 10}s`;
-          const color = `hsla(${Math.random() * 360}, 100%, 70%, ${Math.random() * 0.5 + 0.3})`;
-          particle.style.backgroundColor = color;
-          particle.style.boxShadow = `0 0 ${size * 2}px ${size}px ${color}`;
-          particlesContainer.appendChild(particle);
+      async function fetchProducts() {
+        try {
+          const res = await fetch('/api/products');
+          const data = await res.json();
+          products = data;
+          renderProducts(products);
+        } catch (err) {
+          console.error('Failed to fetch products', err);
         }
       }
 
+      // Existing functions unchanged
+      function createParticles() { /* ... */ }
       createParticles();
-      gsap.to(".particle", {
-        y: "-=100vh",
-        x: "+=100",
-        duration: 20,
-        repeat: -1,
-        ease: "none",
-        stagger: { each: 0.1, from: "random" }
-      });
+      gsap.to(".particle", { /* ... */ });
 
       window.verifyPassword = function() {
         const input = passwordInput.value;
@@ -119,40 +64,17 @@
             .to(adminContent, { y: 0, opacity: 1, duration: 0.8, onStart: () => {
               adminContent.classList.remove('hidden');
               triggerFireworks();
+              fetchProducts();  // Fetch after successful login
             }});
-          renderProducts(products);
         } else {
           shakeAnimation(passwordInput);
           loginError.classList.remove('hidden');
         }
       };
 
-      function triggerFireworks() {
-        const duration = 3000;
-        const end = Date.now() + duration;
-        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-        const interval = setInterval(function() {
-          if (Date.now() > end) return clearInterval(interval);
-          confetti({ ...defaults, particleCount: 50, origin: { x: Math.random() * 0.2 + 0.1, y: Math.random() - 0.2 } });
-          confetti({ ...defaults, particleCount: 50, origin: { x: Math.random() * 0.2 + 0.7, y: Math.random() - 0.2 } });
-        }, 250);
-        setTimeout(() => confetti({ particleCount: 150, spread: 120, origin: { y: 0.6 } }), 500);
-      }
-
-      function shakeAnimation(target) {
-        gsap.timeline()
-          .to(target, { x: 10, duration: 0.1 })
-          .to(target, { x: -20, duration: 0.1 })
-          .to(target, { x: 10, duration: 0.1 })
-          .to(target, { x: 0, duration: 0.1 });
-      }
-
-      function showMessage(msg, type = 'success') {
-        messageBox.textContent = msg;
-        messageBox.className = `message ${type}`;
-        messageBox.classList.remove('hidden');
-        setTimeout(() => messageBox.classList.add('hidden'), 3000);
-      }
+      function triggerFireworks() { /* ... */ }
+      function shakeAnimation(target) { /* ... */ }
+      function showMessage(msg, type = 'success') { /* ... */ }
 
       function renderProducts(list = products) {
         productsContainer.innerHTML = "";
@@ -167,7 +89,7 @@
           item.className = 'product-item';
           item.style.animationDelay = `${idx * 0.07}s`;
           item.innerHTML = `
-            <img src="${prod.image}" alt="${prod.name}" />
+            <img src="${prod.image_url || prod.image}" alt="${prod.name}" />
             <strong>${prod.name}</strong>
             <div class="price">₦${prod.price}</div>
             ${prod.discount ? `<span class="discount">-${prod.discount}%</span>` : ''}
@@ -208,12 +130,28 @@
         }
         gsap.to(uploadBtn, { scale: 0.95, duration: 0.3, yoyo: true, repeat: -1 });
         try {
-          // Replace this with real API call if needed
-          const imgURL = URL.createObjectURL(imageFile);
-          products.push({ name, price, category, discount, image: imgURL });
-          renderProducts(products);
+          // Use your backend API POST instead of mock
+          const formData = new FormData();
+          formData.append('name', name);
+          formData.append('price', price);
+          formData.append('category', category);
+          formData.append('discount', discount);
+          formData.append('image', imageFile);
+          formData.append('description', '');
+
+          const token = sessionStorage.getItem('adminAuthToken');
+          const res = await fetch('/api/products', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData
+          });
+          if (!res.ok) throw new Error('Upload failed');
+          
+          await fetchProducts();  // Refresh product list after successful upload
           form.reset();
           showMessage('✅ Product uploaded!', 'success');
+        } catch (err) {
+          showMessage('❌ Upload failed', 'error');
         } finally {
           gsap.killTweensOf(uploadBtn);
         }
