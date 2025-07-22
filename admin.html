@@ -6,12 +6,12 @@
   <title>ChiCasual Admin Panel</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
-  <link rel="stylesheet" href="admin.css"> <!-- Added external CSS reference -->
+  <link rel="stylesheet" href="admin.css">
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body>
-  <!-- Particle Background -->
+
   <div class="particles" id="particles"></div>
 
   <div class="container">
@@ -24,25 +24,16 @@
       <div id="login-error" class="message error hidden">Incorrect password.</div>
     </div>
 
-    <!-- Admin Content (shown after login) -->
+    <!-- Admin Content Section -->
     <div id="admin-content" class="hidden animate__animated animate__fadeInUp">
-      <!-- Search Section -->
       <div class="search-container">
-        <input 
-          type="text" 
-          id="search-input" 
-          placeholder="Search products by name or category..."
-          aria-label="Search products"
-          class="animate__animated animate__fadeInLeft"
-        >
-        <button id="search-button" class="animate__animated animate__fadeInRight">Search</button>
+        <input type="text" id="search-input" placeholder="Search products by name or category..." aria-label="Search products">
+        <button id="search-button">Search</button>
       </div>
 
-      <!-- Upload Form Section -->
       <form id="upload-form" enctype="multipart/form-data" class="animate__animated animate__zoomIn">
         <input type="text" name="productName" placeholder="Product Name" required />
         <input type="number" name="productPrice" placeholder="Price (₦)" required />
-        
         <select name="productCategory" required>
           <option value="">Select Category</option>
           <option value="shoe">Shoe</option>
@@ -52,7 +43,6 @@
           <option value="shorts">Shorts</option>
           <option value="trousers">Trousers</option>
         </select>
-
         <input type="number" name="productDiscount" placeholder="Discount (%)" />
         <input type="file" name="image" accept="image/*" required />
         <input type="hidden" name="adminPassword" id="hidden-password" />
@@ -60,440 +50,189 @@
         <div id="upload-message" class="message hidden"></div>
       </form>
 
-      <!-- Product List Section -->
       <div class="product-list">
-        <h3 class="animate__animated animate__fadeIn">Products</h3>
-        <div id="products-container">
-          <!-- Product items will be dynamically inserted here -->
-        </div>
+        <h3>Products</h3>
+        <div id="products-container"></div>
       </div>
     </div>
   </div>
 
-<script>
-  (function() {
-    // Enhanced Authentication System
-   const authToken = 'chi_casual_secure_token';
-    const correctPassword = 'thisisjustthebeginning'; // TEMPORARY - REMOVE IN PRODUCTION
-    
-    // Check authentication status on page load
-    const storedAuth = sessionStorage.getItem('adminAuthToken');
-    if (storedAuth === authToken) {
-      document.getElementById('login-section')?.classList.add('hidden');
-      document.getElementById('admin-content')?.classList.remove('hidden');
-      fetchProducts();
-    }
+  <script>
+    (function() {
+      const authToken = 'chi_casual_secure_token';
+      const correctPassword = 'thisisjustthebeginning';
+      let products = [];
 
-    // DOM Elements
-    const loginSection = document.getElementById('login-section');
-    const adminContent = document.getElementById('admin-content');
-    const uploadForm = document.getElementById('upload-form');
-    const productsContainer = document.getElementById('products-container');
-    const passwordInput = document.getElementById('admin-password');
-    const loginError = document.getElementById('login-error');
-    const uploadBtn = document.getElementById('upload-btn');
-    const messageBox = document.getElementById('upload-message');
-    const searchInput = document.getElementById('search-input');
-    const searchButton = document.getElementById('search-button');
+      const loginSection = document.getElementById('login-section');
+      const adminContent = document.getElementById('admin-content');
+      const uploadForm = document.getElementById('upload-form');
+      const productsContainer = document.getElementById('products-container');
+      const passwordInput = document.getElementById('admin-password');
+      const loginError = document.getElementById('login-error');
+      const uploadBtn = document.getElementById('upload-btn');
+      const messageBox = document.getElementById('upload-message');
+      const searchInput = document.getElementById('search-input');
+      const searchButton = document.getElementById('search-button');
 
-    // Create particle background
-    function createParticles() {
-      const particlesContainer = document.getElementById('particles');
-      const particleCount = 100;
-      
-      for (let i = 0; i < particleCount; i++) {
-        const particle = document.createElement('div');
-        particle.classList.add('particle');
-        
-        // Random properties
-        const size = Math.random() * 5 + 2;
-        const posX = Math.random() * 100;
-        const duration = Math.random() * 20 + 10;
-        const delay = Math.random() * 10;
-        const color = `hsla(${Math.random() * 360}, 100%, 70%, ${Math.random() * 0.5 + 0.3})`;
-        
-        particle.style.width = `${size}px`;
-        particle.style.height = `${size}px`;
-        particle.style.left = `${posX}%`;
-        particle.style.bottom = `-${size}px`;
-        particle.style.animationDuration = `${duration}s`;
-        particle.style.animationDelay = `${delay}s`;
-        particle.style.backgroundColor = color;
-        particle.style.boxShadow = `0 0 ${size * 2}px ${size}px ${color}`;
-        
-        particlesContainer.appendChild(particle);
+      if (sessionStorage.getItem('adminAuthToken') === authToken) {
+        loginSection.classList.add('hidden');
+        adminContent.classList.remove('hidden');
+        renderProducts(products);
       }
-    }
-    
-    // Initialize particles with GSAP for smoother animation
-    createParticles();
-    gsap.to(".particle", {
-      y: "-=100vh",
-      x: "+=100",
-      duration: 20,
-      repeat: -1,
-      ease: "none",
-      stagger: {
-        each: 0.1,
-        from: "random"
-      }
-    });
 
-    // Initialize
-    if (uploadForm) {
-      uploadForm.addEventListener('submit', handleFormSubmit);
-    }
-
-    // Set up search functionality
-    if (searchInput) {
-      searchInput.addEventListener('keyup', function(e) {
-        if (e.key === 'Enter') {
-          fetchProducts(searchInput.value.trim());
+      function createParticles() {
+        const particlesContainer = document.getElementById('particles');
+        for (let i = 0; i < 100; i++) {
+          const particle = document.createElement('div');
+          particle.classList.add('particle');
+          const size = Math.random() * 5 + 2;
+          particle.style.width = `${size}px`;
+          particle.style.height = `${size}px`;
+          particle.style.left = `${Math.random() * 100}%`;
+          particle.style.bottom = `-${size}px`;
+          particle.style.animationDuration = `${Math.random() * 20 + 10}s`;
+          particle.style.animationDelay = `${Math.random() * 10}s`;
+          const color = `hsla(${Math.random() * 360}, 100%, 70%, ${Math.random() * 0.5 + 0.3})`;
+          particle.style.backgroundColor = color;
+          particle.style.boxShadow = `0 0 ${size * 2}px ${size}px ${color}`;
+          particlesContainer.appendChild(particle);
         }
+      }
+
+      createParticles();
+      gsap.to(".particle", {
+        y: "-=100vh",
+        x: "+=100",
+        duration: 20,
+        repeat: -1,
+        ease: "none",
+        stagger: { each: 0.1, from: "random" }
       });
-    }
 
-    if (searchButton) {
-      searchButton.addEventListener('click', function() {
-        fetchProducts(searchInput.value.trim());
-      });
-    }
-
-    // Enhanced Password verification with animations
-    const verifyPassword = function() {
-      const input = passwordInput?.value;
-      if (!input || !loginError) return;
-
-      // Create ripple effect on button click
-      const btn = document.querySelector('#login-section button');
-      const ripple = document.createElement('span');
-      ripple.classList.add('ripple');
-      btn.appendChild(ripple);
-      
-      // Remove ripple after animation
-      setTimeout(() => {
-        ripple.remove();
-      }, 600);
-
-      if (input === correctPassword) {
-        // Set authentication token
-        sessionStorage.setItem('adminAuthToken', authToken);
-        
-        // GSAP animation sequence for login success
-        gsap.timeline()
-          .to(loginSection, {
-            y: -50,
-            opacity: 0,
-            duration: 0.5,
-            ease: "power2.inOut"
-          })
-          .to(adminContent, {
-            y: 0,
-            opacity: 1,
-            duration: 0.8,
-            ease: "elastic.out(1, 0.5)",
-            onStart: () => {
+      window.verifyPassword = function() {
+        const input = passwordInput.value;
+        if (!input) return;
+        if (input === correctPassword) {
+          sessionStorage.setItem('adminAuthToken', authToken);
+          gsap.timeline()
+            .to(loginSection, { y: -50, opacity: 0, duration: 0.5 })
+            .to(adminContent, { y: 0, opacity: 1, duration: 0.8, onStart: () => {
               adminContent.classList.remove('hidden');
               triggerFireworks();
-            }
-          });
-        
-        fetchProducts();
-      } else {
-        // Shake animation for wrong password
-        gsap.timeline()
-          .to(passwordInput, {
-            x: 10,
-            duration: 0.1,
-            ease: "power1.inOut"
-          })
-          .to(passwordInput, {
-            x: -20,
-            duration: 0.1
-          })
-          .to(passwordInput, {
-            x: 10,
-            duration: 0.1
-          })
-          .to(passwordInput, {
-            x: 0,
-            duration: 0.1
-          });
-        
-        loginError.classList.remove('hidden');
-        loginSection.classList.add('animate__animated', 'animate__headShake');
-        setTimeout(() => {
-          loginSection.classList.remove('animate__animated', 'animate__headShake');
-        }, 1000);
-      }
-    };
-
-    // Fireworks effect for successful login
-    function triggerFireworks() {
-      const duration = 3 * 1000;
-      const animationEnd = Date.now() + duration;
-      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-      
-      function randomInRange(min, max) {
-        return Math.random() * (max - min) + min;
-      }
-      
-      const interval = setInterval(function() {
-        const timeLeft = animationEnd - Date.now();
-        
-        if (timeLeft <= 0) {
-          return clearInterval(interval);
+            }});
+          renderProducts(products);
+        } else {
+          shakeAnimation(passwordInput);
+          loginError.classList.remove('hidden');
         }
-        
-        const particleCount = 50 * (timeLeft / duration);
-        
-        // Launch from left edge
-        confetti({
-          ...defaults,
-          particleCount,
-          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
-        });
-        
-        // Launch from right edge
-        confetti({
-          ...defaults,
-          particleCount,
-          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
-        });
-      }, 250);
-      
-      // Big explosion in center
-      setTimeout(() => {
-        confetti({
-          particleCount: 150,
-          spread: 120,
-          origin: { y: 0.6 }
-        });
-      }, 500);
-    }
-
-    // Form submission handler with enhanced animations
-    async function handleFormSubmit(e) {
-      e.preventDefault();
-      const form = e.target;
-      const formData = new FormData();
-
-      // Get form values
-      const name = form.productName.value.trim();
-      const price = form.productPrice.value;
-      const category = form.productCategory.value.trim();
-      const discount = form.productDiscount.value || 0;
-      const imageFile = form.image.files[0];
-
-      // Validation with animations
-      if (!name || !price || !category) {
-        showMessage('❌ Please fill all required fields', 'error');
-        
-        gsap.timeline()
-          .to(form, {
-            x: 10,
-            duration: 0.1,
-            ease: "power1.inOut"
-          })
-          .to(form, {
-            x: -20,
-            duration: 0.1
-          })
-          .to(form, {
-            x: 10,
-            duration: 0.1
-          })
-          .to(form, {
-            x: 0,
-            duration: 0.1
-          });
-        
-        // Highlight empty fields
-        if (!name) {
-          gsap.to(form.productName, {
-            backgroundColor: "rgba(255, 71, 87, 0.3)",
-            duration: 0.3,
-            yoyo: true,
-            repeat: 1
-          });
-        }
-        if (!price) {
-          gsap.to(form.productPrice, {
-            backgroundColor: "rgba(255, 71, 87, 0.3)",
-            duration: 0.3,
-            yoyo: true,
-            repeat: 1
-          });
-        }
-        if (!category) {
-          gsap.to(form.productCategory, {
-            backgroundColor: "rgba(255, 71, 87, 0.3)",
-            duration: 0.3,
-            yoyo: true,
-            repeat: 1
-          });
-        }
-        
-        return;
-      }
-
-      if (isNaN(parseFloat(price)) || isNaN(parseFloat(discount))) {
-        showMessage('❌ Price and discount must be numbers', 'error');
-        return;
-      }
-
-      if (!imageFile) {
-        showMessage('❌ Product image is required', 'error');
-        gsap.to('input[type="file"]', {
-          backgroundColor: "rgba(255, 71, 87, 0.3)",
-          duration: 0.3,
-          yoyo: true,
-          repeat: 1
-        });
-        return;
-      }
-
-      const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
-      if (!validTypes.includes(imageFile.type)) {
-        showMessage('❌ Only JPG, PNG or WebP images allowed', 'error');
-        return;
-      }
-
-      // Prepare form data
-      formData.append('name', name);
-      formData.append('price', parseFloat(price));
-      formData.append('category', category);
-      formData.append('discount', parseFloat(discount));
-      formData.append('image', imageFile);
-
-      // UI loading state with animation
-      setUploadButtonState(true);
-      gsap.to(uploadBtn, {
-        scale: 0.95,
-        duration: 0.3,
-        yoyo: true,
-        repeat: -1
-      });
-
-      try {
-        const res = await fetch('/api/products', {
-          method: 'POST',
-          body: formData
-        });
-
-        if (!res.ok) {
-          const errorData = await res.json();
-               // Highlight empty fields
-      if (!name) {
-        gsap.to(form.productName, {
-          backgroundColor: "rgba(255, 71, 87, 0.3)",
-          duration: 0.3,
-          yoyo: true,
-          repeat: 1
-        });
-      }
-      if (!price) {
-        gsap.to(form.productPrice, {
-          backgroundColor: "rgba(255, 71, 87, 0.3)",
-          duration: 0.3,
-          yoyo: true,
-          repeat: 1
-        });
-      }
-      if (!category) {
-        gsap.to(form.productCategory, {
-          backgroundColor: "rgba(255, 71, 87, 0.3)",
-          duration: 0.3,
-          yoyo: true,
-          repeat: 1
-        });
-      }
-      return;
-    }
-
-    // Mock image upload for demonstration purpose
-    const imgURL = URL.createObjectURL(imageFile);
-    products.push({
-      name,
-      price,
-      category,
-      discount,
-      image: imgURL
-    });
-
-    renderProducts(products);
-    form.reset();
-    showMessage("✅ Product uploaded!", "success");
-  }
-
-  // Show message with animation
-  function showMessage(msg, type = 'success') {
-    messageBox.textContent = msg;
-    messageBox.className = `message ${type}`;
-    messageBox.classList.remove('hidden');
-    setTimeout(() => messageBox.classList.add('hidden'), 3000);
-  }
-
-  // Render products (mock for demo, can be replaced by API call)
-  function renderProducts(list = products) {
-    productsContainer.innerHTML = "";
-    if (!list.length) {
-      productsContainer.innerHTML = '<div class="empty">No products found.</div>';
-      return;
-    }
-    productsContainer.innerHTML = '<div class="products-grid"></div>';
-    const grid = productsContainer.querySelector('.products-grid');
-    list.forEach((prod, idx) => {
-      const discountText = prod.discount ? `<span class="discount">-${prod.discount}%</span>` : "";
-      const item = document.createElement('div');
-      item.className = 'product-item';
-      item.style.animationDelay = `${idx * 0.07}s`;
-      item.innerHTML = `
-        <img src="${prod.image}" alt="${prod.name}" />
-        <strong>${prod.name}</strong>
-        <div class="price">₦${prod.price}</div>
-        ${discountText}
-        <div class="category">${prod.category}</div>
-        <button class="delete-btn">Delete</button>
-      `;
-      // Simple delete button (frontend only)
-      item.querySelector('.delete-btn').onclick = () => {
-        products = products.filter(p => p !== prod);
-        renderProducts(products);
-        showMessage('Product deleted!', 'success');
       };
-      grid.appendChild(item);
-    });
-  }
 
-  // Product search
-  function searchProducts(term) {
-    term = term.toLowerCase();
-    const filtered = products.filter(
-      p => p.name.toLowerCase().includes(term) || p.category.toLowerCase().includes(term)
-    );
-    renderProducts(filtered);
-  }
+      function triggerFireworks() {
+        const duration = 3000;
+        const end = Date.now() + duration;
+        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+        const interval = setInterval(function() {
+          if (Date.now() > end) return clearInterval(interval);
+          confetti({ ...defaults, particleCount: 50, origin: { x: Math.random() * 0.2 + 0.1, y: Math.random() - 0.2 } });
+          confetti({ ...defaults, particleCount: 50, origin: { x: Math.random() * 0.2 + 0.7, y: Math.random() - 0.2 } });
+        }, 250);
+        setTimeout(() => confetti({ particleCount: 150, spread: 120, origin: { y: 0.6 } }), 500);
+      }
 
-  // Event listeners
-  if (uploadForm) uploadForm.addEventListener('submit', handleFormSubmit);
-  if (searchInput) {
-    searchInput.addEventListener('keyup', function(e) {
-      if (e.key === 'Enter') searchProducts(searchInput.value.trim());
-    });
-  }
-  if (searchButton) searchButton.addEventListener('click', function() {
-    searchProducts(searchInput.value.trim());
-  });
+      function shakeAnimation(target) {
+        gsap.timeline()
+          .to(target, { x: 10, duration: 0.1 })
+          .to(target, { x: -20, duration: 0.1 })
+          .to(target, { x: 10, duration: 0.1 })
+          .to(target, { x: 0, duration: 0.1 });
+      }
 
-  // Initial Auth Check
-  const storedAuth = sessionStorage.getItem('adminAuthToken');
-  if (storedAuth === authToken) {
-    loginSection?.classList.add('hidden');
-    adminContent?.classList.remove('hidden');
-    renderProducts(products);
-  }
-})();
-</script>
+      function showMessage(msg, type = 'success') {
+        messageBox.textContent = msg;
+        messageBox.className = `message ${type}`;
+        messageBox.classList.remove('hidden');
+        setTimeout(() => messageBox.classList.add('hidden'), 3000);
+      }
+
+      function renderProducts(list = products) {
+        productsContainer.innerHTML = "";
+        if (!list.length) {
+          productsContainer.innerHTML = '<div class="empty">No products found.</div>';
+          return;
+        }
+        const grid = document.createElement('div');
+        grid.className = 'products-grid';
+        list.forEach((prod, idx) => {
+          const item = document.createElement('div');
+          item.className = 'product-item';
+          item.style.animationDelay = `${idx * 0.07}s`;
+          item.innerHTML = `
+            <img src="${prod.image}" alt="${prod.name}" />
+            <strong>${prod.name}</strong>
+            <div class="price">₦${prod.price}</div>
+            ${prod.discount ? `<span class="discount">-${prod.discount}%</span>` : ''}
+            <div class="category">${prod.category}</div>
+            <button class="delete-btn">Delete</button>
+          `;
+          item.querySelector('.delete-btn').onclick = () => {
+            products = products.filter(p => p !== prod);
+            renderProducts(products);
+            showMessage('Product deleted!', 'success');
+          };
+          grid.appendChild(item);
+        });
+        productsContainer.appendChild(grid);
+      }
+
+      async function handleFormSubmit(e) {
+        e.preventDefault();
+        const form = e.target;
+        const name = form.productName.value.trim();
+        const price = form.productPrice.value;
+        const category = form.productCategory.value.trim();
+        const discount = form.productDiscount.value || 0;
+        const imageFile = form.image.files[0];
+        if (!name || !price || !category || !imageFile) {
+          shakeAnimation(form);
+          showMessage('❌ Please fill all required fields', 'error');
+          return;
+        }
+        if (isNaN(parseFloat(price)) || isNaN(parseFloat(discount))) {
+          showMessage('❌ Price and discount must be numbers', 'error');
+          return;
+        }
+        const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!validTypes.includes(imageFile.type)) {
+          showMessage('❌ Only JPG, PNG, or WebP images allowed', 'error');
+          return;
+        }
+        gsap.to(uploadBtn, { scale: 0.95, duration: 0.3, yoyo: true, repeat: -1 });
+        try {
+          // Replace this with real API call if needed
+          const imgURL = URL.createObjectURL(imageFile);
+          products.push({ name, price, category, discount, image: imgURL });
+          renderProducts(products);
+          form.reset();
+          showMessage('✅ Product uploaded!', 'success');
+        } finally {
+          gsap.killTweensOf(uploadBtn);
+        }
+      }
+
+      uploadForm.addEventListener('submit', handleFormSubmit);
+      searchInput.addEventListener('keyup', e => {
+        if (e.key === 'Enter') searchProducts(searchInput.value.trim());
+      });
+      searchButton.addEventListener('click', () => searchProducts(searchInput.value.trim()));
+
+      function searchProducts(term) {
+        term = term.toLowerCase();
+        const filtered = products.filter(p => p.name.toLowerCase().includes(term) || p.category.toLowerCase().includes(term));
+        renderProducts(filtered);
+      }
+
+    })();
+  </script>
+
 </body>
 </html>
