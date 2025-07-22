@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html> 
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -12,170 +12,227 @@
 </head>
 <body>
 
-<div class="particles" id="particles"></div>
+  <div class="particles" id="particles"></div>
 
-<div class="container">
-  <h2 class="animate__animated animate__pulse animate__infinite">ChiCasual Admin Panel</h2>
+  <div class="container">
+    <h2 class="animate__animated animate__pulse animate__infinite">ChiCasual Admin Panel</h2>
 
-  <!-- Login Section -->
-  <div id="login-section" class="animate__animated animate__fadeIn">
-    <input type="text" id="admin-email" placeholder="Enter admin email" required />
-    <input type="password" id="admin-password" placeholder="Enter admin password" required />
-    <button onclick="loginAdmin()">Login</button>
-    <div id="login-error" class="message error hidden">Login failed.</div>
-  </div>
-
-  <!-- Admin Content Section -->
-  <div id="admin-content" class="hidden animate__animated animate__fadeInUp">
-    <div class="search-container">
-      <input type="text" id="search-input" placeholder="Search products by name or category..." aria-label="Search products">
-      <button id="search-button">Search</button>
+    <!-- Login Section -->
+    <div id="login-section" class="animate__animated animate__fadeIn">
+      <input type="password" id="admin-password" placeholder="Enter admin password" required />
+      <button onclick="verifyPassword()">Login</button>
+      <div id="login-error" class="message error hidden">Incorrect password.</div>
     </div>
 
-    <form id="upload-form" enctype="multipart/form-data" class="animate__animated animate__zoomIn">
-      <input type="text" name="productName" placeholder="Product Name" required />
-      <input type="number" name="productPrice" placeholder="Price (₦)" required />
-      <select name="productCategory" required>
-        <option value="">Select Category</option>
-        <option value="shoe">Shoe</option>
-        <option value="senators">Senators</option>
-        <option value="caps">Caps</option>
-        <option value="shirts">Shirts</option>
-        <option value="shorts">Shorts</option>
-        <option value="trousers">Trousers</option>
-      </select>
-      <input type="number" name="productDiscount" placeholder="Discount (%)" />
-      <input type="file" name="image" accept="image/*" required />
-      <button type="submit" id="upload-btn">Upload Product</button>
-      <div id="upload-message" class="message hidden"></div>
-    </form>
+    <!-- Admin Content Section -->
+    <div id="admin-content" class="hidden animate__animated animate__fadeInUp">
+      <div class="search-container">
+        <input type="text" id="search-input" placeholder="Search products by name or category..." aria-label="Search products">
+        <button id="search-button">Search</button>
+      </div>
 
-    <div class="product-list">
-      <h3>Products</h3>
-      <div id="products-container"></div>
+      <form id="upload-form" enctype="multipart/form-data" class="animate__animated animate__zoomIn">
+        <input type="text" name="productName" placeholder="Product Name" required />
+        <input type="number" name="productPrice" placeholder="Price (₦)" required />
+        <select name="productCategory" required>
+          <option value="">Select Category</option>
+          <option value="shoe">Shoe</option>
+          <option value="senators">Senators</option>
+          <option value="caps">Caps</option>
+          <option value="shirts">Shirts</option>
+          <option value="shorts">Shorts</option>
+          <option value="trousers">Trousers</option>
+        </select>
+        <input type="number" name="productDiscount" placeholder="Discount (%)" />
+        <input type="file" name="image" accept="image/*" required />
+        <input type="hidden" name="adminPassword" id="hidden-password" />
+        <button type="submit" id="upload-btn">Upload Product</button>
+        <div id="upload-message" class="message hidden"></div>
+      </form>
+
+      <div class="product-list">
+        <h3>Products</h3>
+        <div id="products-container"></div>
+      </div>
     </div>
   </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<script>
-  const supabase = supabase.createClient('YOUR_SUPABASE_URL', 'YOUR_SUPABASE_PUBLIC_KEY');
+  <script>
+    (function() {
+      const authToken = 'chi_casual_secure_token';
+      const correctPassword = 'thisisjustthebeginning';
+      let products = [];
 
-  const loginSection = document.getElementById('login-section');
-  const adminContent = document.getElementById('admin-content');
-  const productsContainer = document.getElementById('products-container');
-  const uploadForm = document.getElementById('upload-form');
-  const messageBox = document.getElementById('upload-message');
-  const loginError = document.getElementById('login-error');
-  const searchInput = document.getElementById('search-input');
-  const searchButton = document.getElementById('search-button');
-  const uploadBtn = document.getElementById('upload-btn');
+      const loginSection = document.getElementById('login-section');
+      const adminContent = document.getElementById('admin-content');
+      const uploadForm = document.getElementById('upload-form');
+      const productsContainer = document.getElementById('products-container');
+      const passwordInput = document.getElementById('admin-password');
+      const loginError = document.getElementById('login-error');
+      const uploadBtn = document.getElementById('upload-btn');
+      const messageBox = document.getElementById('upload-message');
+      const searchInput = document.getElementById('search-input');
+      const searchButton = document.getElementById('search-button');
 
-  let session = null;
-  let products = [];
+      if (sessionStorage.getItem('adminAuthToken') === authToken) {
+        loginSection.classList.add('hidden');
+        adminContent.classList.remove('hidden');
+        renderProducts(products);
+      }
 
-  async function loginAdmin() {
-    const email = document.getElementById('admin-email').value;
-    const password = document.getElementById('admin-password').value;
-    if (!email || !password) return;
+      function createParticles() {
+        const particlesContainer = document.getElementById('particles');
+        for (let i = 0; i < 100; i++) {
+          const particle = document.createElement('div');
+          particle.classList.add('particle');
+          const size = Math.random() * 5 + 2;
+          particle.style.width = `${size}px`;
+          particle.style.height = `${size}px`;
+          particle.style.left = `${Math.random() * 100}%`;
+          particle.style.bottom = `-${size}px`;
+          particle.style.animationDuration = `${Math.random() * 20 + 10}s`;
+          particle.style.animationDelay = `${Math.random() * 10}s`;
+          const color = `hsla(${Math.random() * 360}, 100%, 70%, ${Math.random() * 0.5 + 0.3})`;
+          particle.style.backgroundColor = color;
+          particle.style.boxShadow = `0 0 ${size * 2}px ${size}px ${color}`;
+          particlesContainer.appendChild(particle);
+        }
+      }
 
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-      if (!data.user.user_metadata.is_admin) throw new Error('Not an admin');
-      session = data.session;
-      loginSection.classList.add('hidden');
-      adminContent.classList.remove('hidden');
-      loadProductsFromServer();
-    } catch {
-      loginError.classList.remove('hidden');
-    }
-  }
-
-  function showMessage(msg, type = 'success') {
-    messageBox.textContent = msg;
-    messageBox.className = `message ${type}`;
-    messageBox.classList.remove('hidden');
-    setTimeout(() => messageBox.classList.add('hidden'), 3000);
-  }
-
-  async function loadProductsFromServer() {
-    try {
-      const res = await fetch('/api/products');
-      const data = await res.json();
-      products = data;
-      renderProducts(products);
-    } catch {
-      showMessage('❌ Failed to load products', 'error');
-    }
-  }
-
-  function renderProducts(list = products) {
-    productsContainer.innerHTML = "";
-    if (!list.length) {
-      productsContainer.innerHTML = '<div class="empty">No products found.</div>';
-      return;
-    }
-    const grid = document.createElement('div');
-    grid.className = 'products-grid';
-    list.forEach((prod, idx) => {
-      const item = document.createElement('div');
-      item.className = 'product-item';
-      item.style.animationDelay = `${idx * 0.07}s`;
-      item.innerHTML = `
-        <img src="${prod.image_url}" alt="${prod.name}" />
-        <strong>${prod.name}</strong>
-        <div class="price">₦${prod.price}</div>
-        ${prod.discount ? `<span class="discount">-${prod.discount}%</span>` : ''}
-        <div class="category">${prod.category}</div>
-      `;
-      grid.appendChild(item);
-    });
-    productsContainer.appendChild(grid);
-  }
-
-  uploadForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!session) return showMessage('❌ Please login first', 'error');
-
-    const form = e.target;
-    const formData = new FormData();
-    formData.append('name', form.productName.value.trim());
-    formData.append('price', form.productPrice.value);
-    formData.append('category', form.productCategory.value.trim());
-    formData.append('discount', form.productDiscount.value || 0);
-    formData.append('description', '');
-    formData.append('image', form.image.files[0]);
-
-    gsap.to(uploadBtn, { scale: 0.95, duration: 0.3, yoyo: true, repeat: -1 });
-    try {
-      const res = await fetch('/api/products', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${session.access_token}` },
-        body: formData
+      createParticles();
+      gsap.to(".particle", {
+        y: "-=100vh",
+        x: "+=100",
+        duration: 20,
+        repeat: -1,
+        ease: "none",
+        stagger: { each: 0.1, from: "random" }
       });
-      if (!res.ok) throw new Error('Upload failed');
-      await loadProductsFromServer();
-      form.reset();
-      showMessage('✅ Product uploaded!', 'success');
-    } catch {
-      showMessage('❌ Upload failed', 'error');
-    } finally {
-      gsap.killTweensOf(uploadBtn);
-    }
-  });
 
-  searchInput.addEventListener('keyup', e => {
-    if (e.key === 'Enter') searchProducts(searchInput.value.trim());
-  });
-  searchButton.addEventListener('click', () => searchProducts(searchInput.value.trim()));
+      window.verifyPassword = function() {
+        const input = passwordInput.value;
+        if (!input) return;
+        if (input === correctPassword) {
+          sessionStorage.setItem('adminAuthToken', authToken);
+          gsap.timeline()
+            .to(loginSection, { y: -50, opacity: 0, duration: 0.5 })
+            .to(adminContent, { y: 0, opacity: 1, duration: 0.8, onStart: () => {
+              adminContent.classList.remove('hidden');
+              triggerFireworks();
+            }});
+          renderProducts(products);
+        } else {
+          shakeAnimation(passwordInput);
+          loginError.classList.remove('hidden');
+        }
+      };
 
-  function searchProducts(term) {
-    term = term.toLowerCase();
-    const filtered = products.filter(p => p.name.toLowerCase().includes(term) || p.category.toLowerCase().includes(term));
-    renderProducts(filtered);
-  }
-</script>
+      function triggerFireworks() {
+        const duration = 3000;
+        const end = Date.now() + duration;
+        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+        const interval = setInterval(function() {
+          if (Date.now() > end) return clearInterval(interval);
+          confetti({ ...defaults, particleCount: 50, origin: { x: Math.random() * 0.2 + 0.1, y: Math.random() - 0.2 } });
+          confetti({ ...defaults, particleCount: 50, origin: { x: Math.random() * 0.2 + 0.7, y: Math.random() - 0.2 } });
+        }, 250);
+        setTimeout(() => confetti({ particleCount: 150, spread: 120, origin: { y: 0.6 } }), 500);
+      }
+
+      function shakeAnimation(target) {
+        gsap.timeline()
+          .to(target, { x: 10, duration: 0.1 })
+          .to(target, { x: -20, duration: 0.1 })
+          .to(target, { x: 10, duration: 0.1 })
+          .to(target, { x: 0, duration: 0.1 });
+      }
+
+      function showMessage(msg, type = 'success') {
+        messageBox.textContent = msg;
+        messageBox.className = `message ${type}`;
+        messageBox.classList.remove('hidden');
+        setTimeout(() => messageBox.classList.add('hidden'), 3000);
+      }
+
+      function renderProducts(list = products) {
+        productsContainer.innerHTML = "";
+        if (!list.length) {
+          productsContainer.innerHTML = '<div class="empty">No products found.</div>';
+          return;
+        }
+        const grid = document.createElement('div');
+        grid.className = 'products-grid';
+        list.forEach((prod, idx) => {
+          const item = document.createElement('div');
+          item.className = 'product-item';
+          item.style.animationDelay = `${idx * 0.07}s`;
+          item.innerHTML = `
+            <img src="${prod.image}" alt="${prod.name}" />
+            <strong>${prod.name}</strong>
+            <div class="price">₦${prod.price}</div>
+            ${prod.discount ? `<span class="discount">-${prod.discount}%</span>` : ''}
+            <div class="category">${prod.category}</div>
+            <button class="delete-btn">Delete</button>
+          `;
+          item.querySelector('.delete-btn').onclick = () => {
+            products = products.filter(p => p !== prod);
+            renderProducts(products);
+            showMessage('Product deleted!', 'success');
+          };
+          grid.appendChild(item);
+        });
+        productsContainer.appendChild(grid);
+      }
+
+      async function handleFormSubmit(e) {
+        e.preventDefault();
+        const form = e.target;
+        const name = form.productName.value.trim();
+        const price = form.productPrice.value;
+        const category = form.productCategory.value.trim();
+        const discount = form.productDiscount.value || 0;
+        const imageFile = form.image.files[0];
+        if (!name || !price || !category || !imageFile) {
+          shakeAnimation(form);
+          showMessage('❌ Please fill all required fields', 'error');
+          return;
+        }
+        if (isNaN(parseFloat(price)) || isNaN(parseFloat(discount))) {
+          showMessage('❌ Price and discount must be numbers', 'error');
+          return;
+        }
+        const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!validTypes.includes(imageFile.type)) {
+          showMessage('❌ Only JPG, PNG, or WebP images allowed', 'error');
+          return;
+        }
+        gsap.to(uploadBtn, { scale: 0.95, duration: 0.3, yoyo: true, repeat: -1 });
+        try {
+          // Replace this with real API call if needed
+          const imgURL = URL.createObjectURL(imageFile);
+          products.push({ name, price, category, discount, image: imgURL });
+          renderProducts(products);
+          form.reset();
+          showMessage('✅ Product uploaded!', 'success');
+        } finally {
+          gsap.killTweensOf(uploadBtn);
+        }
+      }
+
+      uploadForm.addEventListener('submit', handleFormSubmit);
+      searchInput.addEventListener('keyup', e => {
+        if (e.key === 'Enter') searchProducts(searchInput.value.trim());
+      });
+      searchButton.addEventListener('click', () => searchProducts(searchInput.value.trim()));
+
+      function searchProducts(term) {
+        term = term.toLowerCase();
+        const filtered = products.filter(p => p.name.toLowerCase().includes(term) || p.category.toLowerCase().includes(term));
+        renderProducts(filtered);
+      }
+
+    })();
+  </script>
 
 </body>
 </html>
