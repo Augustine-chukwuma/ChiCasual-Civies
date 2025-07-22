@@ -19,9 +19,10 @@
 
   <!-- Login Section -->
   <div id="login-section" class="animate__animated animate__fadeIn">
+    <input type="text" id="admin-email" placeholder="Enter admin email" required />
     <input type="password" id="admin-password" placeholder="Enter admin password" required />
-    <button onclick="verifyPassword()">Login</button>
-    <div id="login-error" class="message error hidden">Incorrect password.</div>
+    <button onclick="loginAdmin()">Login</button>
+    <div id="login-error" class="message error hidden">Login failed.</div>
   </div>
 
   <!-- Admin Content Section -->
@@ -56,94 +57,39 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script>
-(function() {
-  const authToken = 'chi_casual_secure_token';
-  const correctPassword = 'thisisjustthebeginning';
-  let products = [];
+  const supabase = supabase.createClient('YOUR_SUPABASE_URL', 'YOUR_SUPABASE_PUBLIC_KEY');
 
   const loginSection = document.getElementById('login-section');
   const adminContent = document.getElementById('admin-content');
-  const uploadForm = document.getElementById('upload-form');
   const productsContainer = document.getElementById('products-container');
-  const passwordInput = document.getElementById('admin-password');
-  const loginError = document.getElementById('login-error');
-  const uploadBtn = document.getElementById('upload-btn');
+  const uploadForm = document.getElementById('upload-form');
   const messageBox = document.getElementById('upload-message');
+  const loginError = document.getElementById('login-error');
   const searchInput = document.getElementById('search-input');
   const searchButton = document.getElementById('search-button');
+  const uploadBtn = document.getElementById('upload-btn');
 
-  if (sessionStorage.getItem('adminAuthToken') === authToken) {
-    loginSection.classList.add('hidden');
-    adminContent.classList.remove('hidden');
-    loadProductsFromServer();
-  }
+  let session = null;
+  let products = [];
 
-  function createParticles() {
-    const particlesContainer = document.getElementById('particles');
-    for (let i = 0; i < 100; i++) {
-      const particle = document.createElement('div');
-      particle.classList.add('particle');
-      const size = Math.random() * 5 + 2;
-      particle.style.width = `${size}px`;
-      particle.style.height = `${size}px`;
-      particle.style.left = `${Math.random() * 100}%`;
-      particle.style.bottom = `-${size}px`;
-      particle.style.animationDuration = `${Math.random() * 20 + 10}s`;
-      particle.style.animationDelay = `${Math.random() * 10}s`;
-      const color = `hsla(${Math.random() * 360}, 100%, 70%, ${Math.random() * 0.5 + 0.3})`;
-      particle.style.backgroundColor = color;
-      particle.style.boxShadow = `0 0 ${size * 2}px ${size}px ${color}`;
-      particlesContainer.appendChild(particle);
-    }
-  }
+  async function loginAdmin() {
+    const email = document.getElementById('admin-email').value;
+    const password = document.getElementById('admin-password').value;
+    if (!email || !password) return;
 
-  createParticles();
-  gsap.to(".particle", {
-    y: "-=100vh",
-    x: "+=100",
-    duration: 20,
-    repeat: -1,
-    ease: "none",
-    stagger: { each: 0.1, from: "random" }
-  });
-
-  window.verifyPassword = function() {
-    const input = passwordInput.value;
-    if (!input) return;
-    if (input === correctPassword) {
-      sessionStorage.setItem('adminAuthToken', authToken);
-      gsap.timeline()
-        .to(loginSection, { y: -50, opacity: 0, duration: 0.5 })
-        .to(adminContent, { y: 0, opacity: 1, duration: 0.8, onStart: () => {
-          adminContent.classList.remove('hidden');
-          triggerFireworks();
-        }});
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      if (!data.user.user_metadata.is_admin) throw new Error('Not an admin');
+      session = data.session;
+      loginSection.classList.add('hidden');
+      adminContent.classList.remove('hidden');
       loadProductsFromServer();
-    } else {
-      shakeAnimation(passwordInput);
+    } catch {
       loginError.classList.remove('hidden');
     }
-  };
-
-  function triggerFireworks() {
-    const duration = 3000;
-    const end = Date.now() + duration;
-    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-    const interval = setInterval(function() {
-      if (Date.now() > end) return clearInterval(interval);
-      confetti({ ...defaults, particleCount: 50, origin: { x: Math.random() * 0.2 + 0.1, y: Math.random() - 0.2 } });
-      confetti({ ...defaults, particleCount: 50, origin: { x: Math.random() * 0.2 + 0.7, y: Math.random() - 0.2 } });
-    }, 250);
-    setTimeout(() => confetti({ particleCount: 150, spread: 120, origin: { y: 0.6 } }), 500);
-  }
-
-  function shakeAnimation(target) {
-    gsap.timeline()
-      .to(target, { x: 10, duration: 0.1 })
-      .to(target, { x: -20, duration: 0.1 })
-      .to(target, { x: 10, duration: 0.1 })
-      .to(target, { x: 0, duration: 0.1 });
   }
 
   function showMessage(msg, type = 'success') {
@@ -151,6 +97,17 @@
     messageBox.className = `message ${type}`;
     messageBox.classList.remove('hidden');
     setTimeout(() => messageBox.classList.add('hidden'), 3000);
+  }
+
+  async function loadProductsFromServer() {
+    try {
+      const res = await fetch('/api/products');
+      const data = await res.json();
+      products = data;
+      renderProducts(products);
+    } catch {
+      showMessage('❌ Failed to load products', 'error');
+    }
   }
 
   function renderProducts(list = products) {
@@ -177,48 +134,24 @@
     productsContainer.appendChild(grid);
   }
 
-  async function loadProductsFromServer() {
-    try {
-      const res = await fetch('/api/products');
-      const data = await res.json();
-      products = data;
-      renderProducts(products);
-    } catch {
-      showMessage('❌ Failed to load products', 'error');
-    }
-  }
-
-  async function handleFormSubmit(e) {
+  uploadForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (!session) return showMessage('❌ Please login first', 'error');
+
     const form = e.target;
-    const name = form.productName.value.trim();
-    const price = form.productPrice.value;
-    const category = form.productCategory.value.trim();
-    const discount = form.productDiscount.value || 0;
-    const imageFile = form.image.files[0];
-    if (!name || !price || !category || !imageFile) {
-      shakeAnimation(form);
-      showMessage('❌ Please fill all required fields', 'error');
-      return;
-    }
-    if (isNaN(parseFloat(price)) || isNaN(parseFloat(discount))) {
-      showMessage('❌ Price and discount must be numbers', 'error');
-      return;
-    }
     const formData = new FormData();
-    formData.append('name', name);
-    formData.append('price', price);
-    formData.append('category', category);
-    formData.append('discount', discount);
+    formData.append('name', form.productName.value.trim());
+    formData.append('price', form.productPrice.value);
+    formData.append('category', form.productCategory.value.trim());
+    formData.append('discount', form.productDiscount.value || 0);
     formData.append('description', '');
-    formData.append('image', imageFile);
+    formData.append('image', form.image.files[0]);
 
     gsap.to(uploadBtn, { scale: 0.95, duration: 0.3, yoyo: true, repeat: -1 });
     try {
-      const token = sessionStorage.getItem('adminAuthToken');
       const res = await fetch('/api/products', {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
         body: formData
       });
       if (!res.ok) throw new Error('Upload failed');
@@ -230,9 +163,8 @@
     } finally {
       gsap.killTweensOf(uploadBtn);
     }
-  }
+  });
 
-  uploadForm.addEventListener('submit', handleFormSubmit);
   searchInput.addEventListener('keyup', e => {
     if (e.key === 'Enter') searchProducts(searchInput.value.trim());
   });
@@ -243,8 +175,6 @@
     const filtered = products.filter(p => p.name.toLowerCase().includes(term) || p.category.toLowerCase().includes(term));
     renderProducts(filtered);
   }
-
-})();
 </script>
 
 </body>
