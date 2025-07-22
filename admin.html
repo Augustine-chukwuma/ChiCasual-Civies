@@ -1,4 +1,4 @@
- <!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -61,7 +61,9 @@
     (function() {
       const authToken = 'chi_casual_secure_token';
       const correctPassword = 'thisisjustthebeginning';
-      let products = [];
+
+      // Use localStorage for persistent products
+      let products = JSON.parse(localStorage.getItem('products') || '[]');
 
       const loginSection = document.getElementById('login-section');
       const adminContent = document.getElementById('admin-content');
@@ -175,13 +177,24 @@
             <button class="delete-btn">Delete</button>
           `;
           item.querySelector('.delete-btn').onclick = () => {
-            products = products.filter(p => p !== prod);
+            products = products.filter((p, i) => i !== idx);
+            localStorage.setItem('products', JSON.stringify(products));
             renderProducts(products);
             showMessage('Product deleted!', 'success');
           };
           grid.appendChild(item);
         });
         productsContainer.appendChild(grid);
+      }
+
+      // Convert image file to base64
+      function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
       }
 
       async function handleFormSubmit(e) {
@@ -208,9 +221,10 @@
         }
         gsap.to(uploadBtn, { scale: 0.95, duration: 0.3, yoyo: true, repeat: -1 });
         try {
-          // Replace this with real API call if needed
-          const imgURL = URL.createObjectURL(imageFile);
+          // Convert image file to base64 for persistence
+          const imgURL = await fileToBase64(imageFile);
           products.push({ name, price, category, discount, image: imgURL });
+          localStorage.setItem('products', JSON.stringify(products));
           renderProducts(products);
           form.reset();
           showMessage('✅ Product uploaded!', 'success');
@@ -229,6 +243,11 @@
         term = term.toLowerCase();
         const filtered = products.filter(p => p.name.toLowerCase().includes(term) || p.category.toLowerCase().includes(term));
         renderProducts(filtered);
+      }
+
+      // Render products initially if logged in
+      if (sessionStorage.getItem('adminAuthToken') === authToken) {
+        renderProducts(products);
       }
 
     })();
