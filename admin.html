@@ -58,202 +58,227 @@
   </div>
 
   <script>
-    (function() {
-      const authToken = 'chi_casual_secure_token';
-      const correctPassword = 'thisisjustthebeginning';
+  (function() {
+    const authToken = 'chi_casual_secure_token';
+    const correctPassword = 'thisisjustthebeginning';
+    let products = [];
 
-      // Use localStorage for persistent products
-      let products = JSON.parse(localStorage.getItem('products') || '[]');
+    const loginSection = document.getElementById('login-section');
+    const adminContent = document.getElementById('admin-content');
+    const uploadForm = document.getElementById('upload-form');
+    const productsContainer = document.getElementById('products-container');
+    const passwordInput = document.getElementById('admin-password');
+    const loginError = document.getElementById('login-error');
+    const uploadBtn = document.getElementById('upload-btn');
+    const messageBox = document.getElementById('upload-message');
+    const searchInput = document.getElementById('search-input');
+    const searchButton = document.getElementById('search-button');
 
-      const loginSection = document.getElementById('login-section');
-      const adminContent = document.getElementById('admin-content');
-      const uploadForm = document.getElementById('upload-form');
-      const productsContainer = document.getElementById('products-container');
-      const passwordInput = document.getElementById('admin-password');
-      const loginError = document.getElementById('login-error');
-      const uploadBtn = document.getElementById('upload-btn');
-      const messageBox = document.getElementById('upload-message');
-      const searchInput = document.getElementById('search-input');
-      const searchButton = document.getElementById('search-button');
-
-      if (sessionStorage.getItem('adminAuthToken') === authToken) {
-        loginSection.classList.add('hidden');
-        adminContent.classList.remove('hidden');
-        renderProducts(products);
+    function createParticles() {
+      const particlesContainer = document.getElementById('particles');
+      for (let i = 0; i < 100; i++) {
+        const particle = document.createElement('div');
+        particle.classList.add('particle');
+        const size = Math.random() * 5 + 2;
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        particle.style.left = `${Math.random() * 100}%`;
+        particle.style.bottom = `-${size}px`;
+        particle.style.animationDuration = `${Math.random() * 20 + 10}s`;
+        particle.style.animationDelay = `${Math.random() * 10}s`;
+        const color = `hsla(${Math.random() * 360}, 100%, 70%, ${Math.random() * 0.5 + 0.3})`;
+        particle.style.backgroundColor = color;
+        particle.style.boxShadow = `0 0 ${size * 2}px ${size}px ${color}`;
+        particlesContainer.appendChild(particle);
       }
+    }
+    createParticles();
+    gsap.to(".particle", {
+      y: "-=100vh",
+      x: "+=100",
+      duration: 20,
+      repeat: -1,
+      ease: "none",
+      stagger: { each: 0.1, from: "random" }
+    });
 
-      function createParticles() {
-        const particlesContainer = document.getElementById('particles');
-        for (let i = 0; i < 100; i++) {
-          const particle = document.createElement('div');
-          particle.classList.add('particle');
-          const size = Math.random() * 5 + 2;
-          particle.style.width = `${size}px`;
-          particle.style.height = `${size}px`;
-          particle.style.left = `${Math.random() * 100}%`;
-          particle.style.bottom = `-${size}px`;
-          particle.style.animationDuration = `${Math.random() * 20 + 10}s`;
-          particle.style.animationDelay = `${Math.random() * 10}s`;
-          const color = `hsla(${Math.random() * 360}, 100%, 70%, ${Math.random() * 0.5 + 0.3})`;
-          particle.style.backgroundColor = color;
-          particle.style.boxShadow = `0 0 ${size * 2}px ${size}px ${color}`;
-          particlesContainer.appendChild(particle);
-        }
-      }
-
-      createParticles();
-      gsap.to(".particle", {
-        y: "-=100vh",
-        x: "+=100",
-        duration: 20,
-        repeat: -1,
-        ease: "none",
-        stagger: { each: 0.1, from: "random" }
-      });
-
-      window.verifyPassword = function() {
-        const input = passwordInput.value;
-        if (!input) return;
-        if (input === correctPassword) {
-          sessionStorage.setItem('adminAuthToken', authToken);
-          gsap.timeline()
-            .to(loginSection, { y: -50, opacity: 0, duration: 0.5 })
-            .to(adminContent, { y: 0, opacity: 1, duration: 0.8, onStart: () => {
-              adminContent.classList.remove('hidden');
-              triggerFireworks();
-            }});
-          renderProducts(products);
-        } else {
-          shakeAnimation(passwordInput);
-          loginError.classList.remove('hidden');
-        }
-      };
-
-      function triggerFireworks() {
-        const duration = 3000;
-        const end = Date.now() + duration;
-        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-        const interval = setInterval(function() {
-          if (Date.now() > end) return clearInterval(interval);
-          confetti({ ...defaults, particleCount: 50, origin: { x: Math.random() * 0.2 + 0.1, y: Math.random() - 0.2 } });
-          confetti({ ...defaults, particleCount: 50, origin: { x: Math.random() * 0.2 + 0.7, y: Math.random() - 0.2 } });
-        }, 250);
-        setTimeout(() => confetti({ particleCount: 150, spread: 120, origin: { y: 0.6 } }), 500);
-      }
-
-      function shakeAnimation(target) {
+    window.verifyPassword = function() {
+      const input = passwordInput.value;
+      if (!input) return;
+      if (input === correctPassword) {
+        sessionStorage.setItem('adminAuthToken', authToken);
         gsap.timeline()
-          .to(target, { x: 10, duration: 0.1 })
-          .to(target, { x: -20, duration: 0.1 })
-          .to(target, { x: 10, duration: 0.1 })
-          .to(target, { x: 0, duration: 0.1 });
+          .to(loginSection, { y: -50, opacity: 0, duration: 0.5 })
+          .to(adminContent, { y: 0, opacity: 1, duration: 0.8, onStart: () => {
+            adminContent.classList.remove('hidden');
+            triggerFireworks();
+          }});
+        fetchAndRenderProducts();
+      } else {
+        shakeAnimation(passwordInput);
+        loginError.classList.remove('hidden');
       }
+    };
 
-      function showMessage(msg, type = 'success') {
-        messageBox.textContent = msg;
-        messageBox.className = `message ${type}`;
-        messageBox.classList.remove('hidden');
-        setTimeout(() => messageBox.classList.add('hidden'), 3000);
-      }
+    function triggerFireworks() {
+      const duration = 3000;
+      const end = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+      const interval = setInterval(function() {
+        if (Date.now() > end) return clearInterval(interval);
+        confetti({ ...defaults, particleCount: 50, origin: { x: Math.random() * 0.2 + 0.1, y: Math.random() - 0.2 } });
+        confetti({ ...defaults, particleCount: 50, origin: { x: Math.random() * 0.2 + 0.7, y: Math.random() - 0.2 } });
+      }, 250);
+      setTimeout(() => confetti({ particleCount: 150, spread: 120, origin: { y: 0.6 } }), 500);
+    }
 
-      function renderProducts(list = products) {
-        productsContainer.innerHTML = "";
-        if (!list.length) {
-          productsContainer.innerHTML = '<div class="empty">No products found.</div>';
-          return;
-        }
-        const grid = document.createElement('div');
-        grid.className = 'products-grid';
-        list.forEach((prod, idx) => {
-          const item = document.createElement('div');
-          item.className = 'product-item';
-          item.style.animationDelay = `${idx * 0.07}s`;
-          item.innerHTML = `
-            <img src="${prod.image}" alt="${prod.name}" />
-            <strong>${prod.name}</strong>
-            <div class="price">₦${prod.price}</div>
-            ${prod.discount ? `<span class="discount">-${prod.discount}%</span>` : ''}
-            <div class="category">${prod.category}</div>
-            <button class="delete-btn">Delete</button>
-          `;
-         item.querySelector('.delete-btn').onclick = () => {
-  if (confirm(`Are you sure you want to delete "${prod.name}"?`)) {
-    products = products.filter((p, i) => i !== idx);
-    localStorage.setItem('products', JSON.stringify(products));
-    renderProducts(products);
-    showMessage('Product deleted!', 'success');
-  }
-};
-          grid.appendChild(item);
-        });
-        productsContainer.appendChild(grid);
-      }
+    function shakeAnimation(target) {
+      gsap.timeline()
+        .to(target, { x: 10, duration: 0.1 })
+        .to(target, { x: -20, duration: 0.1 })
+        .to(target, { x: 10, duration: 0.1 })
+        .to(target, { x: 0, duration: 0.1 });
+    }
 
-      // Convert image file to base64
-      function fileToBase64(file) {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
-      }
+    function showMessage(msg, type = 'success') {
+      messageBox.textContent = msg;
+      messageBox.className = `message ${type}`;
+      messageBox.classList.remove('hidden');
+      setTimeout(() => messageBox.classList.add('hidden'), 3000);
+    }
 
-      async function handleFormSubmit(e) {
-        e.preventDefault();
-        const form = e.target;
-        const name = form.productName.value.trim();
-        const price = form.productPrice.value;
-        const category = form.productCategory.value.trim();
-        const discount = form.productDiscount.value || 0;
-        const imageFile = form.image.files[0];
-        if (!name || !price || !category || !imageFile) {
-          shakeAnimation(form);
-          showMessage('❌ Please fill all required fields', 'error');
-          return;
-        }
-        if (isNaN(parseFloat(price)) || isNaN(parseFloat(discount))) {
-          showMessage('❌ Price and discount must be numbers', 'error');
-          return;
-        }
-        const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
-        if (!validTypes.includes(imageFile.type)) {
-          showMessage('❌ Only JPG, PNG, or WebP images allowed', 'error');
-          return;
-        }
-        gsap.to(uploadBtn, { scale: 0.95, duration: 0.3, yoyo: true, repeat: -1 });
-        try {
-          // Convert image file to base64 for persistence
-          const imgURL = await fileToBase64(imageFile);
-          products.push({ name, price, category, discount, image: imgURL });
-          localStorage.setItem('products', JSON.stringify(products));
-          renderProducts(products);
-          form.reset();
-          showMessage('✅ Product uploaded!', 'success');
-        } finally {
-          gsap.killTweensOf(uploadBtn);
-        }
-      }
-
-      uploadForm.addEventListener('submit', handleFormSubmit);
-      searchInput.addEventListener('keyup', e => {
-        if (e.key === 'Enter') searchProducts(searchInput.value.trim());
-      });
-      searchButton.addEventListener('click', () => searchProducts(searchInput.value.trim()));
-
-      function searchProducts(term) {
-        term = term.toLowerCase();
-        const filtered = products.filter(p => p.name.toLowerCase().includes(term) || p.category.toLowerCase().includes(term));
-        renderProducts(filtered);
-      }
-
-      // Render products initially if logged in
-      if (sessionStorage.getItem('adminAuthToken') === authToken) {
+    // Fetch products from backend
+    async function fetchAndRenderProducts() {
+      try {
+        const response = await fetch('/api/products'); // Change to your actual endpoint
+        products = await response.json();
         renderProducts(products);
+      } catch (err) {
+        showMessage('Error loading products', 'error');
       }
+    }
 
-    })();
+    function renderProducts(list = products) {
+      productsContainer.innerHTML = "";
+      if (!list.length) {
+        productsContainer.innerHTML = '<div class="empty">No products found.</div>';
+        return;
+      }
+      const grid = document.createElement('div');
+      grid.className = 'products-grid';
+      list.forEach((prod, idx) => {
+        const item = document.createElement('div');
+        item.className = 'product-item';
+        item.style.animationDelay = `${idx * 0.07}s`;
+        item.innerHTML = `
+          <img src="${prod.imageUrl}" alt="${prod.name}" />
+          <strong>${prod.name}</strong>
+          <div class="price">₦${prod.price}</div>
+          ${prod.discount ? `<span class="discount">-${prod.discount}%</span>` : ''}
+          <div class="category">${prod.category}</div>
+          <button class="delete-btn">Delete</button>
+        `;
+        item.querySelector('.delete-btn').onclick = async () => {
+          if (confirm(`Are you sure you want to delete "${prod.name}"?`)) {
+            await deleteProduct(prod.id);
+          }
+        };
+        grid.appendChild(item);
+      });
+      productsContainer.appendChild(grid);
+    }
+
+    // Delete product by ID via backend
+    async function deleteProduct(id) {
+      try {
+        const resp = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+        if (resp.ok) {
+          showMessage('Product deleted!', 'success');
+          fetchAndRenderProducts();
+        } else {
+          showMessage('Failed to delete product', 'error');
+        }
+      } catch (err) {
+        showMessage('Error deleting product', 'error');
+      }
+    }
+
+    // Handle upload via backend (with image upload to Cloudinary)
+    async function handleFormSubmit(e) {
+      e.preventDefault();
+      const form = e.target;
+      const name = form.productName.value.trim();
+      const price = form.productPrice.value;
+      const category = form.productCategory.value.trim();
+      const discount = form.productDiscount.value || 0;
+      const imageFile = form.image.files[0];
+      if (!name || !price || !category || !imageFile) {
+        shakeAnimation(form);
+        showMessage('❌ Please fill all required fields', 'error');
+        return;
+      }
+      if (isNaN(parseFloat(price)) || isNaN(parseFloat(discount))) {
+        showMessage('❌ Price and discount must be numbers', 'error');
+        return;
+      }
+      const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!validTypes.includes(imageFile.type)) {
+        showMessage('❌ Only JPG, PNG, or WebP images allowed', 'error');
+        return;
+      }
+      gsap.to(uploadBtn, { scale: 0.95, duration: 0.3, yoyo: true, repeat: -1 });
+      try {
+        // 1. Upload image to Cloudinary
+        const formData = new FormData();
+        formData.append('file', imageFile);
+        formData.append('upload_preset', 'YOUR_UPLOAD_PRESET'); // replace with your Cloudinary preset
+        const cloudinaryResp = await fetch('https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/image/upload', {
+          method: 'POST',
+          body: formData
+        });
+        const cloudinaryData = await cloudinaryResp.json();
+        const imageUrl = cloudinaryData.secure_url;
+
+        // 2. Post product data to backend/Supabase
+        const productData = { name, price, category, discount, imageUrl };
+        const resp = await fetch('/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(productData)
+        });
+        if (resp.ok) {
+          showMessage('✅ Product uploaded!', 'success');
+          form.reset();
+          fetchAndRenderProducts();
+        } else {
+          showMessage('❌ Failed to upload product', 'error');
+        }
+      } catch (err) {
+        showMessage('❌ Error uploading product', 'error');
+      } finally {
+        gsap.killTweensOf(uploadBtn);
+      }
+    }
+
+    uploadForm.addEventListener('submit', handleFormSubmit);
+    searchInput.addEventListener('keyup', e => {
+      if (e.key === 'Enter') searchProducts(searchInput.value.trim());
+    });
+    searchButton.addEventListener('click', () => searchProducts(searchInput.value.trim()));
+
+    function searchProducts(term) {
+      term = term.toLowerCase();
+      const filtered = products.filter(p => p.name.toLowerCase().includes(term) || p.category.toLowerCase().includes(term));
+      renderProducts(filtered);
+    }
+
+    // Initial load after login
+    if (sessionStorage.getItem('adminAuthToken') === authToken) {
+      loginSection.classList.add('hidden');
+      adminContent.classList.remove('hidden');
+      fetchAndRenderProducts();
+    }
+  })();
   </script>
-
 </body>
 </html>
