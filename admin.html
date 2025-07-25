@@ -176,12 +176,14 @@
             <div class="category">${prod.category}</div>
             <button class="delete-btn">Delete</button>
           `;
-          item.querySelector('.delete-btn').onclick = () => {
-            products = products.filter((p, i) => i !== idx);
-            localStorage.setItem('products', JSON.stringify(products));
-            renderProducts(products);
-            showMessage('Product deleted!', 'success');
-          };
+         item.querySelector('.delete-btn').onclick = () => {
+  if (confirm(`Are you sure you want to delete "${prod.name}"?`)) {
+    products = products.filter((p, i) => i !== idx);
+    localStorage.setItem('products', JSON.stringify(products));
+    renderProducts(products);
+    showMessage('Product deleted!', 'success');
+  }
+};
           grid.appendChild(item);
         });
         productsContainer.appendChild(grid);
