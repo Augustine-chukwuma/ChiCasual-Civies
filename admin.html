@@ -1,284 +1,239 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>ChiCasual Admin Panel</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
-  <link rel="stylesheet" href="admin.css">
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: #121212;
+      color: #fff;
+      overflow-x: hidden;
+    }
+    .container {
+      max-width: 900px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #1e1e1e;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.4);
+    }
+    h1 {
+      text-align: center;
+      font-weight: 800;
+      font-size: 2rem;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    input, select {
+      padding: 10px;
+      border-radius: 5px;
+      border: none;
+      outline: none;
+      font-size: 1rem;
+    }
+    button {
+      padding: 12px;
+      font-weight: bold;
+      background: #00c896;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+    button:hover {
+      background: #00a37a;
+    }
+    .product-list {
+      margin-top: 30px;
+    }
+    .product {
+      background: #2a2a2a;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .product img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    .product-info {
+      flex: 1;
+    }
+    .delete-btn {
+      background: #ff4d4d;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      color: #fff;
+      font-weight: bold;
+    }
+    .search-box {
+      margin-top: 20px;
+    }
+    .hidden {
+      display: none;
+    }
+    #loginSection {
+      text-align: center;
+      padding: 60px 20px;
+    }
+  </style>
 </head>
 <body>
 
-  <div class="particles" id="particles"></div>
+  <div id="loginSection" class="container">
+    <h1>ChiCasual Admin Login</h1>
+    <input type="password" id="passwordInput" placeholder="Enter Admin Password" />
+    <button onclick="verifyPassword()">Login</button>
+  </div>
 
-  <div class="container">
-    <h2 class="animate__animated animate__pulse animate__infinite">ChiCasual Admin Panel</h2>
+  <div id="adminPanel" class="container hidden animate__animated animate__fadeIn">
+    <h1>Admin Panel</h1>
 
-    <!-- Login Section -->
-    <div id="login-section" class="animate__animated animate__fadeIn">
-      <input type="password" id="admin-password" placeholder="Enter admin password" required />
-      <button onclick="verifyPassword()">Login</button>
-      <div id="login-error" class="message error hidden">Incorrect password.</div>
+    <form id="productForm">
+      <input type="text" id="name" placeholder="Product Name" required />
+      <input type="text" id="price" placeholder="Price" required />
+      <input type="text" id="discount" placeholder="Discount" />
+      <input type="text" id="category" placeholder="Category" required />
+      <input type="file" id="image" accept="image/*" required />
+      <button type="submit">Upload Product</button>
+    </form>
+
+    <div class="search-box">
+      <input type="text" id="search" placeholder="Search products..." />
     </div>
 
-    <!-- Admin Content Section -->
-    <div id="admin-content" class="hidden animate__animated animate__fadeInUp">
-      <div class="search-container">
-        <input type="text" id="search-input" placeholder="Search products by name or category..." aria-label="Search products">
-        <button id="search-button">Search</button>
-      </div>
-
-      <form id="upload-form" enctype="multipart/form-data" class="animate__animated animate__zoomIn">
-        <input type="text" name="productName" placeholder="Product Name" required />
-        <input type="number" name="productPrice" placeholder="Price (₦)" required />
-        <select name="productCategory" required>
-          <option value="">Select Category</option>
-          <option value="shoe">Shoe</option>
-          <option value="senators">Senators</option>
-          <option value="caps">Caps</option>
-          <option value="shirts">Shirts</option>
-          <option value="shorts">Shorts</option>
-          <option value="trousers">Trousers</option>
-        </select>
-        <input type="number" name="productDiscount" placeholder="Discount (%)" />
-        <input type="file" name="image" accept="image/*" required />
-        <input type="hidden" name="adminPassword" id="hidden-password" />
-        <button type="submit" id="upload-btn">Upload Product</button>
-        <div id="upload-message" class="message hidden"></div>
-      </form>
-
-      <div class="product-list">
-        <h3>Products</h3>
-        <div id="products-container"></div>
-      </div>
+    <div class="product-list" id="productList">
+      <!-- Products will load here -->
     </div>
   </div>
 
   <script>
-  (function() {
-    const authToken = 'chi_casual_secure_token';
-    const correctPassword = 'thisisjustthebeginning';
-    let products = [];
+    const PASSWORD = "chicasual2024";
 
-    const loginSection = document.getElementById('login-section');
-    const adminContent = document.getElementById('admin-content');
-    const uploadForm = document.getElementById('upload-form');
-    const productsContainer = document.getElementById('products-container');
-    const passwordInput = document.getElementById('admin-password');
-    const loginError = document.getElementById('login-error');
-    const uploadBtn = document.getElementById('upload-btn');
-    const messageBox = document.getElementById('upload-message');
-    const searchInput = document.getElementById('search-input');
-    const searchButton = document.getElementById('search-button');
-
-    function createParticles() {
-      const particlesContainer = document.getElementById('particles');
-      for (let i = 0; i < 100; i++) {
-        const particle = document.createElement('div');
-        particle.classList.add('particle');
-        const size = Math.random() * 5 + 2;
-        particle.style.width = `${size}px`;
-        particle.style.height = `${size}px`;
-        particle.style.left = `${Math.random() * 100}%`;
-        particle.style.bottom = `-${size}px`;
-        particle.style.animationDuration = `${Math.random() * 20 + 10}s`;
-        particle.style.animationDelay = `${Math.random() * 10}s`;
-        const color = `hsla(${Math.random() * 360}, 100%, 70%, ${Math.random() * 0.5 + 0.3})`;
-        particle.style.backgroundColor = color;
-        particle.style.boxShadow = `0 0 ${size * 2}px ${size}px ${color}`;
-        particlesContainer.appendChild(particle);
+    function verifyPassword() {
+      const input = document.getElementById("passwordInput").value;
+      if (input === PASSWORD) {
+        sessionStorage.setItem("authenticated", "true");
+        document.getElementById("loginSection").classList.add("hidden");
+        document.getElementById("adminPanel").classList.remove("hidden");
+        loadProducts();
+      } else {
+        alert("Incorrect password");
       }
     }
-    createParticles();
-    gsap.to(".particle", {
-      y: "-=100vh",
-      x: "+=100",
-      duration: 20,
-      repeat: -1,
-      ease: "none",
-      stagger: { each: 0.1, from: "random" }
-    });
 
-    window.verifyPassword = function() {
-      const input = passwordInput.value;
-      if (!input) return;
-      if (input === correctPassword) {
-        sessionStorage.setItem('adminAuthToken', authToken);
-        gsap.timeline()
-          .to(loginSection, { y: -50, opacity: 0, duration: 0.5 })
-          .to(adminContent, { y: 0, opacity: 1, duration: 0.8, onStart: () => {
-            adminContent.classList.remove('hidden');
-            triggerFireworks();
-          }});
-        fetchAndRenderProducts();
-      } else {
-        shakeAnimation(passwordInput);
-        loginError.classList.remove('hidden');
+    window.onload = () => {
+      if (sessionStorage.getItem("authenticated") === "true") {
+        document.getElementById("loginSection").classList.add("hidden");
+        document.getElementById("adminPanel").classList.remove("hidden");
+        loadProducts();
       }
     };
 
-    function triggerFireworks() {
-      const duration = 3000;
-      const end = Date.now() + duration;
-      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-      const interval = setInterval(function() {
-        if (Date.now() > end) return clearInterval(interval);
-        confetti({ ...defaults, particleCount: 50, origin: { x: Math.random() * 0.2 + 0.1, y: Math.random() - 0.2 } });
-        confetti({ ...defaults, particleCount: 50, origin: { x: Math.random() * 0.2 + 0.7, y: Math.random() - 0.2 } });
-      }, 250);
-      setTimeout(() => confetti({ particleCount: 150, spread: 120, origin: { y: 0.6 } }), 500);
-    }
+    const productForm = document.getElementById("productForm");
+    const productList = document.getElementById("productList");
+    const searchInput = document.getElementById("search");
 
-    function shakeAnimation(target) {
-      gsap.timeline()
-        .to(target, { x: 10, duration: 0.1 })
-        .to(target, { x: -20, duration: 0.1 })
-        .to(target, { x: 10, duration: 0.1 })
-        .to(target, { x: 0, duration: 0.1 });
-    }
-
-    function showMessage(msg, type = 'success') {
-      messageBox.textContent = msg;
-      messageBox.className = `message ${type}`;
-      messageBox.classList.remove('hidden');
-      setTimeout(() => messageBox.classList.add('hidden'), 3000);
-    }
-
-    // Fetch products from backend
-    async function fetchAndRenderProducts() {
-      try {
-        const response = await fetch('/api/products'); // Change to your actual endpoint
-        products = await response.json();
-        renderProducts(products);
-      } catch (err) {
-        showMessage('Error loading products', 'error');
-      }
-    }
-
-    function renderProducts(list = products) {
-      productsContainer.innerHTML = "";
-      if (!list.length) {
-        productsContainer.innerHTML = '<div class="empty">No products found.</div>';
-        return;
-      }
-      const grid = document.createElement('div');
-      grid.className = 'products-grid';
-      list.forEach((prod, idx) => {
-        const item = document.createElement('div');
-        item.className = 'product-item';
-        item.style.animationDelay = `${idx * 0.07}s`;
-        item.innerHTML = `
-          <img src="${prod.imageUrl}" alt="${prod.name}" />
-          <strong>${prod.name}</strong>
-          <div class="price">₦${prod.price}</div>
-          ${prod.discount ? `<span class="discount">-${prod.discount}%</span>` : ''}
-          <div class="category">${prod.category}</div>
-          <button class="delete-btn">Delete</button>
-        `;
-        item.querySelector('.delete-btn').onclick = async () => {
-          if (confirm(`Are you sure you want to delete "${prod.name}"?`)) {
-            await deleteProduct(prod.id);
-          }
-        };
-        grid.appendChild(item);
-      });
-      productsContainer.appendChild(grid);
-    }
-
-    // Delete product by ID via backend
-    async function deleteProduct(id) {
-      try {
-        const resp = await fetch(`/api/products/${id}`, { method: 'DELETE' });
-        if (resp.ok) {
-          showMessage('Product deleted!', 'success');
-          fetchAndRenderProducts();
-        } else {
-          showMessage('Failed to delete product', 'error');
-        }
-      } catch (err) {
-        showMessage('Error deleting product', 'error');
-      }
-    }
-
-    // Handle upload via backend (with image upload to Cloudinary)
-    async function handleFormSubmit(e) {
+    productForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const form = e.target;
-      const name = form.productName.value.trim();
-      const price = form.productPrice.value;
-      const category = form.productCategory.value.trim();
-      const discount = form.productDiscount.value || 0;
-      const imageFile = form.image.files[0];
-      if (!name || !price || !category || !imageFile) {
-        shakeAnimation(form);
-        showMessage('❌ Please fill all required fields', 'error');
-        return;
-      }
-      if (isNaN(parseFloat(price)) || isNaN(parseFloat(discount))) {
-        showMessage('❌ Price and discount must be numbers', 'error');
-        return;
-      }
-      const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
-      if (!validTypes.includes(imageFile.type)) {
-        showMessage('❌ Only JPG, PNG, or WebP images allowed', 'error');
-        return;
-      }
-      gsap.to(uploadBtn, { scale: 0.95, duration: 0.3, yoyo: true, repeat: -1 });
-      try {
-        // 1. Upload image to Cloudinary
-        const formData = new FormData();
-        formData.append('file', imageFile);
-        formData.append('upload_preset', 'YOUR_UPLOAD_PRESET'); // replace with your Cloudinary preset
-        const cloudinaryResp = await fetch('https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/image/upload', {
-          method: 'POST',
-          body: formData
-        });
-        const cloudinaryData = await cloudinaryResp.json();
-        const imageUrl = cloudinaryData.secure_url;
 
-        // 2. Post product data to backend/Supabase
-        const productData = { name, price, category, discount, imageUrl };
-        const resp = await fetch('/api/products', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(productData)
-        });
-        if (resp.ok) {
-          showMessage('✅ Product uploaded!', 'success');
-          form.reset();
-          fetchAndRenderProducts();
-        } else {
-          showMessage('❌ Failed to upload product', 'error');
-        }
-      } catch (err) {
-        showMessage('❌ Error uploading product', 'error');
-      } finally {
-        gsap.killTweensOf(uploadBtn);
-      }
-    }
+      const name = document.getElementById("name").value;
+      const price = document.getElementById("price").value;
+      const discount = document.getElementById("discount").value;
+      const category = document.getElementById("category").value;
+      const imageFile = document.getElementById("image").files[0];
 
-    uploadForm.addEventListener('submit', handleFormSubmit);
-    searchInput.addEventListener('keyup', e => {
-      if (e.key === 'Enter') searchProducts(searchInput.value.trim());
+      if (!imageFile) return alert("Please select an image");
+
+      // Upload to Cloudinary
+      const formData = new FormData();
+      formData.append('file', imageFile);
+      formData.append('upload_preset', 'chi_casual_upload'); // Make sure this preset exists in your Cloudinary account
+
+      const cloudinaryResp = await fetch('https://api.cloudinary.com/v1_1/dn71wkf7j/image/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      const cloudinaryData = await cloudinaryResp.json();
+      const imageUrl = cloudinaryData.secure_url;
+
+      // Save to server
+      const response = await fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, price, discount, category, imageUrl })
+      });
+
+      if (response.ok) {
+        alert("Product uploaded successfully");
+        productForm.reset();
+        loadProducts();
+      } else {
+        alert("Failed to upload product");
+      }
     });
-    searchButton.addEventListener('click', () => searchProducts(searchInput.value.trim()));
 
-    function searchProducts(term) {
-      term = term.toLowerCase();
-      const filtered = products.filter(p => p.name.toLowerCase().includes(term) || p.category.toLowerCase().includes(term));
-      renderProducts(filtered);
+    async function loadProducts() {
+      productList.innerHTML = "";
+      const res = await fetch("/api/products");
+      const data = await res.json();
+
+      data.forEach(product => {
+        const div = document.createElement("div");
+        div.className = "product";
+        div.innerHTML = `
+          <img src="${product.imageUrl}" />
+          <div class="product-info">
+            <strong>${product.name}</strong><br/>
+            Price: ₦${product.price} | Discount: ${product.discount || "0"}%<br/>
+            Category: ${product.category}
+          </div>
+          <button class="delete-btn" onclick="deleteProduct('${product.id}')">Delete</button>
+        `;
+        productList.appendChild(div);
+      });
     }
 
-    // Initial load after login
-    if (sessionStorage.getItem('adminAuthToken') === authToken) {
-      loginSection.classList.add('hidden');
-      adminContent.classList.remove('hidden');
-      fetchAndRenderProducts();
+    async function deleteProduct(id) {
+      if (confirm("Are you sure you want to delete this product?")) {
+        const res = await fetch(`/api/products/${id}`, {
+          method: "DELETE"
+        });
+
+        if (res.ok) {
+          alert("Product deleted");
+          loadProducts();
+        } else {
+          alert("Failed to delete");
+        }
+      }
     }
-  })();
+
+    searchInput.addEventListener("input", () => {
+      const filter = searchInput.value.toLowerCase();
+      const items = document.querySelectorAll(".product");
+      items.forEach(item => {
+        const text = item.innerText.toLowerCase();
+        item.style.display = text.includes(filter) ? "" : "none";
+      });
+    });
   </script>
 </body>
 </html>
