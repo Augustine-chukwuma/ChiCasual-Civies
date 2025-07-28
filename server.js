@@ -75,14 +75,30 @@ app.get('/api/products/search', async (req, res) => {
 });
 
 // Create Product (Admin Only)
-app.post('/api/products', authenticate, upload.single('image'), async (req, res) => {
-  if (!req.user.user_metadata?.is_admin) 
-    return res.status(403).json({ error: 'Forbidden' });
+app.post('/api/products', async (req, res) => {
+  const { name, price, category, discount, imageUrl } = req.body;
+  if (!name || !price || !category || !imageUrl)
+    return res.status(400).json({ error: 'Missing required fields' });
 
   try {
-    const { name, price, category, discount, description } = req.body;
-    if (!name || !price || !category || !req.file) 
-      return res.status(400).json({ error: 'Missing required fields' });
+    const { data, error } = await supabase
+      .from('products')
+      .insert({
+        name,
+        price: parseFloat(price),
+        category,
+        discount: parseFloat(discount) || 0,
+        image_url: imageUrl
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.status(201).json(data);
+  } catch (error) {
+    res.status(500).json({ error: 'Product creation failed' });
+  }
+});
 
     // Upload image
     const result = await uploadToCloudinary(req.file.buffer);
