@@ -231,8 +231,8 @@
         // 1. Upload image to Cloudinary
         const formData = new FormData();
         formData.append('file', imageFile);
-        formData.append('upload_preset', 'YOUR_UPLOAD_PRESET'); // replace with your Cloudinary preset
-        const cloudinaryResp = await fetch('https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/image/upload', {
+        formData.append('upload_preset', 'ChiCasual_unsigned_upload'); // replace with your Cloudinary preset
+        const cloudinaryResp = await fetch('https://api.cloudinary.com/v1_1/chicasual/image/upload', {
           method: 'POST',
           body: formData
         });
