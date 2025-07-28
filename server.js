@@ -101,8 +101,9 @@ app.post('/api/products', async (req, res) => {
 });
 
     // Upload image
-    const result = await uploadToCloudinary(req.file.buffer);
-
+(async () => {
+  const result = await something();
+})();
     // Insert into Supabase
     const { data, error } = await supabase
       .from('products')
