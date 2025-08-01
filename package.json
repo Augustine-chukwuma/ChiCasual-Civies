@@ -17,16 +17,19 @@
   ],
   "author": "ChiCasual Team",
   "license": "MIT",
-  "dependencies": {
-    "@supabase/supabase-js": "^2.50.3",
-    "body-parser": "^1.20.2",
-    "cloudinary": "^2.7.0",
-    "dotenv": "^16.3.1",
-    "express": "^4.18.2",
-    "flutterwave-node-v3": "^1.3.0",
-    "multer": "^1.4.5-lts.1",
-    "uuid": "^9.0.1"
-  },
+"dependencies": {
+  "@supabase/supabase-js": "^2.50.3",
+  "body-parser": "^1.20.2",
+  "cloudinary": "^2.7.0",
+  "dotenv": "^16.3.1",
+  "express": "^4.18.2",
+  "flutterwave-node-v3": "^1.3.0",
+  "multer": "^1.4.5-lts.1",
+  "uuid": "^9.0.1",
+  "archiver": "^5.3.1",   // or "achiever" if that's a specific package
+  "zipper": "^1.0.1",
+  "axios": "^1.6.8"
+}
   "devDependencies": {
     "nodemon": "^3.0.3"
   }
