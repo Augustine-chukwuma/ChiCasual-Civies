@@ -1,28 +1,30 @@
-services:
-  - type: web
-    name: chicasual
-    env: node
-    plan: free
-    buildCommand: npm install
-    startCommand: node server.js
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: SUPABASE_URL
-        value: https://your-project.supabase.co
-      - key: SUPABASE_KEY
-        value: your-supabase-service-role-key
-      - key: CLOUDINARY_CLOUD_NAME
-        value: your-cloud-name
-      - key: CLOUDINARY_API_KEY
-        value: your-api-key
-      - key: CLOUDINARY_API_SECRET
-        value: your-api-secret
-      - key: FLW_PUBLIC_KEY
-        value: your-flutterwave-public-key
-      - key: FLW_SECRET_KEY
-        value: your-flutterwave-secret-key
-      - key: FLW_WEBHOOK_SECRET
-        value: your-webhook-secret
-      - key: PAYMENT_REDIRECT_URL
+services:  
+  - type: web  
+    name: chicasual  
+    env: node  
+    plan: free  
+    buildCommand: |
+      apt-get update && apt-get install -y libzip-dev
+      npm install  
+    startCommand: node server.js  
+    envVars:  
+      - key: NODE_ENV  
+        value: production  
+      - key: SUPABASE_URL  
+        value: https://your-project.supabase.co  
+      - key: SUPABASE_KEY  
+        value: your-supabase-service-role-key  
+      - key: CLOUDINARY_CLOUD_NAME  
+        value: your-cloud-name  
+      - key: CLOUDINARY_API_KEY  
+        value: your-api-key  
+      - key: CLOUDINARY_API_SECRET  
+        value: your-api-secret  
+      - key: FLW_PUBLIC_KEY  
+        value: your-flutterwave-public-key  
+      - key: FLW_SECRET_KEY  
+        value: your-flutterwave-secret-key  
+      - key: FLW_WEBHOOK_SECRET  
+        value: your-webhook-secret  
+      - key: PAYMENT_REDIRECT_URL  
         value: https://your-frontend.com/payment-success
